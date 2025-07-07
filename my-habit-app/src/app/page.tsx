@@ -339,35 +339,24 @@ export default function Page() {
   };
 
   async function fetchHabitSuggestions(prevTask: string | null, nextTask: string | null): Promise<string[]> {
-    const context = [prevTask, nextTask].filter(Boolean).join(", ");
-    if (!context) return habitCandidates.slice(0, 3);
-
     try {
-      setAiHabitLoading(true);
-      setAiHabitError(null);
-      const prompt = `사용자의 이전 행동과 다음 행동: ${context}\n이 행동들 사이에 자연스럽게 연결할 수 있는 3개 이상의 5분 이내에 할 수 있는 웰빙 습관을 명사형으로 추천해 주세요. 각 습관에는 구체적인 행동과 시간(몇 분, 몇 회)을 반드시 포함해주세요. 예시: '2분 깊은 숨쉬기', '3분 스트레칭', '5분 가벼운 산책'`;
+  setAiHabitLoading(true);
+  setAiHabitError(null);
+  const res = await fetch("/app/openai/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prevTask, nextTask }),  // ← 여기만 바뀜
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "추천 실패");
+  return data.suggestions;                          // ← 서버가 보내주는 배열
+} catch (e: any) {
+  setAiHabitError(e.message || "추천 중 오류 발생");
+  return habitCandidates.slice(0, 3);
+} finally {
+  setAiHabitLoading(false);
+}
 
-      const res = await fetch("/openai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setAiHabitError("AI 추천 불가");
-        return habitCandidates.slice(0, 3);
-      }
-
-      const text = data.result as string;
-      const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
-      return lines.slice(0, 5).map((line) => line.replace(/^[\d\.\-\)\s]+/, "").trim());
-    } catch{
-      setAiHabitError("추천 중 오류 발생");
-      return habitCandidates.slice(0, 3);
-    } finally {
-      setAiHabitLoading(false);
-    }
   }
 
   const handleFetchHabitSuggestions = async (idx: number) => {
@@ -379,8 +368,9 @@ export default function Page() {
     const nextTask = idx < routines.length - 1 ? routines[idx + 1].task : null;
 
     const suggestions = await fetchHabitSuggestions(prevTask, nextTask);
-    setAiHabitSuggestions(suggestions);
-    setHabitSuggestionIdx(idx);
+  setAiHabitSuggestions(suggestions);
+  setHabitSuggestionIdx(idx);
+
   };
 
   async function generateSummaryAI(day: string, tasks: string[]): Promise<string> {
