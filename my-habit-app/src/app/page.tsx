@@ -350,7 +350,8 @@ export default function Page() {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "추천 실패");
   return data.suggestions;                          // ← 서버가 보내주는 배열
-} catch (e: any) {
+} catch(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unknown error";
   setAiHabitError(e.message || "추천 중 오류 발생");
   return habitCandidates.slice(0, 3);
 } finally {
