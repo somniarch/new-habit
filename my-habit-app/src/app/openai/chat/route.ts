@@ -3,9 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const runtime = "nodejs";
 
@@ -19,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 서버에서 프롬프트 구성
+    // 조합된 컨텍스트 생성
     const context = [prevTask, nextTask].filter(Boolean).join(", ");
     const prompt = `사용자의 이전 행동과 다음 행동: ${context}
 이 행동들 사이에 자연스럽게 연결할 수 있는 짧은 웰빙 습관을
@@ -27,8 +25,10 @@ export async function POST(request: NextRequest) {
 2) 공백 포함 12자 이내
 3) 3개 이상 5개 이하
 4) 리스트 기호, 설명 등 불필요한 요소 없음
+5) 활동은 모두 한국어 명사형으로만 작성
 예시: 3분 스트레칭💪`;
 
+    // OpenAI 호출
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -39,20 +39,31 @@ export async function POST(request: NextRequest) {
       max_tokens: 200,
     });
 
-    const text = completion.choices[0]?.message?.content || "";
-    const suggestions = text
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line);
+    // 응답 텍스트 추출
+    const text = completion.choices[0]?.message?.content?.trim() ?? "";
+    console.log("[Habit API] OpenAI raw response:", text);
 
-    return NextResponse.json({ suggestions });
-    } catch (error: unknown) {
-    console.error("Habit recommendation error:", error);
-    // narrow to Error
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unknown error";
+    // 줄 단위로 분할, 불필요한 접두사 제거
+    const suggestions = text
+      .split(/\r?\n+/)
+      .map((line) => line.replace(/^[-*]\s*/, "").trim())
+      .filter((line) => line)
+      // 명사형 형태만 필터링 (끝이 '기' 또는 명사형 활동) – 필요 시 확장
+      .filter((line) => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
+
+    // 빈 배열일 경우 명확한 에러 반환
+    if (suggestions.length === 0) {
+      return NextResponse.json(
+        { error: "No suggestions generated" },
+        { status: 502 }
+      );
+    }
+
+    // JSON 배열 형태로 바로 반환
+    return NextResponse.json(suggestions);
+  } catch (error: unknown) {
+    console.error("[Habit API] Error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
