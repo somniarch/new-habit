@@ -11,10 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     const { prevTask, nextTask } = await request.json();
     if (!prevTask && !nextTask) {
-      return NextResponse.json(
-        { error: "No context provided (prevTask or nextTask required)" },
-        { status: 400 }
-      );
+      return new Response("No context provided (prevTask or nextTask required)", { status: 400 });
     }
 
     // 조합된 컨텍스트 생성
@@ -48,22 +45,22 @@ export async function POST(request: NextRequest) {
       .split(/\r?\n+/)
       .map((line) => line.replace(/^[-*]\s*/, "").trim())
       .filter((line) => line)
-      // 명사형 형태만 필터링 (끝이 '기' 또는 명사형 활동) – 필요 시 확장
+      // 명사형 형태만 필터링
       .filter((line) => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
 
-    // 빈 배열일 경우 명확한 에러 반환
     if (suggestions.length === 0) {
-      return NextResponse.json(
-        { error: "No suggestions generated" },
-        { status: 502 }
-      );
+      return new Response("No suggestions generated", { status: 502 });
     }
 
-    // JSON 배열 형태로 바로 반환
-    return NextResponse.json(suggestions);
+    // 문자열로 반환 (각 항목을 줄바꿈으로 연결)
+    const body = suggestions.join("\n");
+    return new Response(body, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      status: 200,
+    });
   } catch (error: unknown) {
     console.error("[Habit API] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return new Response(message, { status: 500 });
   }
 }
