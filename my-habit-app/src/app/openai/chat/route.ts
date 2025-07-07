@@ -46,9 +46,13 @@ export async function POST(request: NextRequest) {
       .filter((line) => line);
 
     return NextResponse.json({ suggestions });
-  } catch (err: any) {
-    console.error("Habit recommendation error:", err);
-    const msg = err?.message ?? "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    } catch (error: unknown) {
+    console.error("Habit recommendation error:", error);
+    // narrow to Error
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
