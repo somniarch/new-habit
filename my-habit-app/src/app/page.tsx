@@ -338,26 +338,29 @@ export default function Page() {
     setRoutines(copy);
   };
 
-  async function fetchHabitSuggestions(prevTask: string | null, nextTask: string | null): Promise<string[]> {
+    async function fetchHabitSuggestions(
+    prevTask: string | null,
+    nextTask: string | null
+  ): Promise<string[]> {
+    setAiHabitLoading(true);
+    setAiHabitError(null);
     try {
-  setAiHabitLoading(true);
-  setAiHabitError(null);
-  const res = await fetch("/app/openai/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prevTask, nextTask }),  // ← 여기만 바뀜
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "추천 실패");
-  return data.suggestions;                          // ← 서버가 보내주는 배열
-} catch(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unknown error";
-  setAiHabitError(e.message || "추천 중 오류 발생");
-  return habitCandidates.slice(0, 3);
-} finally {
-  setAiHabitLoading(false);
-}
-
+      const res = await fetch("/app/openai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prevTask, nextTask }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "추천 실패");
+      return data.suggestions as string[];
+    } catch (error: unknown) {
+      setAiHabitError(
+        error instanceof Error ? error.message : "추천 중 오류 발생"
+     );
+      return habitCandidates.slice(0, 3);
+    } finally {
+      setAiHabitLoading(false);
+    }
   }
 
   const handleFetchHabitSuggestions = async (idx: number) => {
