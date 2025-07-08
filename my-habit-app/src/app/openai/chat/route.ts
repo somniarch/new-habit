@@ -11,7 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     const { prevTask, nextTask } = await request.json();
     if (!prevTask && !nextTask) {
-      return new Response("No context provided (prevTask or nextTask required)", { status: 400 });
+      return new Response(
+        "No context provided (prevTask or nextTask required)",
+        { status: 400 }
+      );
     }
 
     // 조합된 컨텍스트 생성
@@ -40,21 +43,19 @@ export async function POST(request: NextRequest) {
     const text = completion.choices[0]?.message?.content?.trim() ?? "";
     console.log("[Habit API] OpenAI raw response:", text);
 
-    // 줄 단위로 분할, 불필요한 접두사 제거
+    // 줄 단위 분할 및 필터링
     const suggestions = text
       .split(/\r?\n+/)
-      .map((line) => line.replace(/^[-*]\s*/, "").trim())
-      .filter((line) => line)
-      // 명사형 형태만 필터링
-      .filter((line) => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
+      .map(line => line.replace(/^[-*]\s*/, "").trim())
+      .filter(line => line)
+      .filter(line => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
 
     if (suggestions.length === 0) {
       return new Response("No suggestions generated", { status: 502 });
     }
 
-    // 문자열로 반환 (각 항목을 줄바꿈으로 연결)
-    const body = suggestions.join("\n");
-    return new Response(body, {
+    // 문자열로 반환
+    return new Response(suggestions.join("\n"), {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
       status: 200,
     });
