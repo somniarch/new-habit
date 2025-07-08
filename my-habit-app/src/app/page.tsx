@@ -840,7 +840,39 @@ Content: ${promptBase}
     <div>
       <h3 className="mb-2 font-semibold text-sm">이번 달 ({selectedDay})</h3>
       <ResponsiveContainer width="100%" height={150}>
-        <BarChart data={/* 월간 데이터 계산 로직 */}>
+        <BarChart
+          data={(() => {
+            const today = new Date(currentDate);
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const arr: { name: string; Completion: number; Satisfaction: number }[] = [];
+    
+            for (let d = 1; d <= daysInMonth; d++) {
+              const dt = new Date(year, month, d);
+              // JavaScript에서 getDay(): 일=0, 월=1 ... 토=6
+              // fullDays 배열은 월=0 인덱스이므로 +1 해줍니다
+              if (dt.getDay() === fullDays.indexOf(selectedDay) + 1) {
+                const iso = dt.toISOString().split("T")[0];
+                const dayRoutines = routines.filter(r => r.date === iso);
+                const doneCount = dayRoutines.filter(r => r.done).length;
+                const sat = doneCount
+                  ? Math.round(dayRoutines.filter(r => r.done).reduce((sum, r) => sum + r.rating, 0) / doneCount)
+                  : 0;
+    
+                arr.push({
+                  name: `${d}일`,
+                  Completion: dayRoutines.length
+                    ? Math.round((doneCount / dayRoutines.length) * 100)
+                    : 0,
+                  Satisfaction: sat,
+                });
+              }
+            }
+    
+            return arr;
+          })()}
+        >
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
@@ -849,18 +881,19 @@ Content: ${promptBase}
         </BarChart>
       </ResponsiveContainer>
     </div>
-
-    {/* ── 전체 로그 CSV 다운로드 버튼 ── */}
-    <div className="text-center mt-4">
-      <button
-        onClick={() => downloadCSV(routines)}
-        className="rounded-full bg-black text-white px-6 py-2 font-semibold hover:bg-gray-800 transition"
-      >
-        전체 로그 CSV 다운로드
-      </button>
-    </div>
-  </div>
-)}
+    
+    
+        {/* ── 전체 로그 CSV 다운로드 버튼 ── */}
+        <div className="text-center mt-4">
+          <button
+            onClick={() => downloadCSV(routines)}
+            className="rounded-full bg-black text-white px-6 py-2 font-semibold hover:bg-gray-800 transition"
+          >
+            전체 로그 CSV 다운로드
+          </button>
+        </div>
+      </div>
+    )}
 
 
           {selectedTab === "today-diary" && (
