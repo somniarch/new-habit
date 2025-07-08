@@ -472,7 +472,7 @@ The drawing should evoke quiet satisfaction and mindfulness.
   }
 }
 
-`;
+;
     const res = await fetch("/api/openai/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
