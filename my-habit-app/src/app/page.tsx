@@ -1,7 +1,7 @@
 'use client';
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -97,10 +97,10 @@ function formatMonthDay(date: Date, dayIndex: number) {
  export default function Page() {
    const { data: session, status } = useSession();
    const isLoggedIn = status === "authenticated";
-   // (Admin 여부는 session.user.role 에서 확인)
+
   const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
-  const [loginError, setLoginError] = useState("");
-   // — 관리자 모드 로직은 서버단 Admin API + 미들웨어로 대체
+  
+
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [weekNum, setWeekNum] = useState(1);
@@ -124,77 +124,71 @@ function formatMonthDay(date: Date, dayIndex: number) {
   const [aiHabitLoading, setAiHabitLoading] = useState(false);
   const [aiHabitError, setAiHabitError] = useState<string | null>(null);
 
-  const getRegisteredUsers = (): { id: string; pw: string }[] => {
-    if (typeof window === "undefined") return [];
-    const json = localStorage.getItem(storedUsersKey);
-    if (!json) return [];
-    try {
-      return JSON.parse(json);
-    } catch {
-      return [];
-    }
-  };
-  const saveRegisteredUsers = (users: { id: string; pw: string }[]) => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(storedUsersKey, JSON.stringify(users));
-  };
-   // ↓ 로그인 로직은 이렇게 함수로 묶어 주세요
-  const handleLocalLogin = () => {
-    const users = getRegisteredUsers();
-    const found = users.find((u) => u.id === userId && u.pw === userPw);
-    if (found) {
-      setIsLoggedIn(true);
-      setIsAdmin(false);
-      setLoginError("");
-      setToast({ emoji: "✅", message: "로그인 성공!" });
-    } else {
-      setLoginError("등록된 사용자 ID 또는 비밀번호가 올바르지 않습니다.");
-      setToast({ emoji: "⚠️", message: "로그인 실패" });
-    }
-  };
-   const [email, setEmail] = useState("");
-   const [password, setPassword] = useState("");
-   const [signUpMode, setSignUpMode] = useState(false);
-   const [authError, setAuthError] = useState("");
 
-   const handleLogin = async () => {
-     setAuthError("");
-     const res = await signIn("credentials", {
-       redirect: false,
-       email,
-       password,
-     });
-     if (res?.error) setAuthError(res.error);
-   };
+  const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [authError, setAuthError] = useState("");
 
-   const handleSignUp = async () => {
-     setAuthError("");
-     const res = await fetch("/api/auth/signup", {
-       method: "POST",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({ email, password }),
-     });
-     const data = await res.json();
-     if (!res.ok) return setAuthError(data.error || "회원가입 실패");
-     // 가입 성공 시 바로 로그인
-     await handleLogin();
-   };
+const { data: session, status } = useSession();
+const isLoggedIn = status === "authenticated";
+const isAdmin = session?.user?.role === "admin"; // credentials provider에서 role 부여
 
-   const handleLogout = () => signOut({ redirect: false });
+const handleLogin = async () => {
+  setAuthError("");
+  const res = await signIn("credentials", {
+    redirect: false,
+    email,
+    password,
+  });
+  if (res?.error) setAuthError("로그인 실패: " + res.error);
+};
 
-      // 수정: 사용자 등록 전용 함수로 분리
-  const handleAddUser = () => {
-    const users = getRegisteredUsers();
-    if (users.find((u) => u.id === newUserId)) {
-      setUserAddError("이미 존재하는 아이디입니다.");
-      return;                   // ← 이제 함수 내부이므로 허용
-    }
-    const updated = [...users, { id: newUserId, pw: newUserPw }];
-    saveRegisteredUsers(updated);
-    setNewUserId("");
-    setNewUserPw("");
-    setToast({ emoji: "✅", message: `사용자 ${newUserId} 등록 완료!` });
-  };
+const handleLogout = () => signOut();
+
+return (
+  <div>
+    {!isLoggedIn ? (
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          handleLogin();
+        }}
+      >
+        <input
+          type="text"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="ID"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="PW"
+          required
+        />
+        <button type="submit">
+          로그인
+        </button>
+        {authError && <p style={{ color: "red" }}>{authError}</p>}
+      </form>
+    ) : (
+      <div>
+        <div>안녕하세요, {session?.user?.email}님</div>
+        {isAdmin && (
+          <div style={{ color: "green", fontWeight: "bold" }}>
+            [관리자 모드]
+          </div>
+        )}
+        <button onClick={handleLogout}>
+          로그아웃
+        </button>
+      </div>
+    )}
+  </div>
+);  // 수정: 사용자 등록 전용 함수로 분리
+ 
   
 
 
@@ -269,7 +263,7 @@ const handleExportCSV = () => {
 
 
   // ✏️ handleAddRoutine 함수 정의 (맨 위쪽 함수 목록 안에 넣어주세요)
-  const handleAddRoutine = () => {
+  const handleAddRoutine = async () => {
     if (!isLoggedIn) {
       alert("로그인 후 이용해주세요.");
       return;
@@ -294,12 +288,13 @@ const handleExportCSV = () => {
    rating: 0,
    isHabit: false,
  };
- await fetch('/api/routines', {
+ await fetch('/api/routines', ...);
    method: 'POST',
    headers: { 'Content-Type': 'application/json' },
    body: JSON.stringify(newRoutineObj),
  });
  reloadRoutines();
+ }
 
     // 3) 입력 필드 초기화
     setNewRoutine({ start: "08:00", end: "09:00", task: "" });
@@ -314,7 +309,7 @@ const handleExportCSV = () => {
     if (!copy[idx].done) return;
 
     const { emoji, msg } = getEncouragementAndHabit(copy[idx].task);
-    setToast({ emoji, message: ${msg} "${copy[idx].task}"! });
+    setToast({ emoji, message: `${msg} "${copy[idx].task}"!` });
     setHabitSuggestionIdx(idx);
 
     setTodayDiaryLogs((prev) => {
@@ -514,38 +509,31 @@ return (
     )}
 
     {/* 로그인 전 */}
-    {!isLoggedIn ? (
-      <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
-        <button
-          onClick={handleLocalLogin}
-          className="w-full py-2 bg-black text-white rounded"
-        >
-          로그인
-        </button>
-        <button
-          onClick={handleAddUser}
-          className="w-full py-2 bg-gray-300 rounded"
-        >
-          사용자 등록
-        </button>
-        {loginError && (
-          <p className="text-red-600 text-sm">{loginError}</p>
-        )}
-      </div>
-    ) : (
-      <>
-        {/* 로그인 후 헤더 */}
-        <div className="flex justify-end gap-2">
-          <span className="text-sm text-gray-600">
-            안녕하세요, {session.user.email}님
-          </span>
-          <button
-            onClick={handleLogout}
-            className="text-red-600 underline text-sm"
-          >
-            로그아웃
-          </button>
-        </div>
+   {!isLoggedIn ? (
+   <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
+     <button
+       onClick={() => signIn()}   // NextAuth의 signIn만 사용!
+       className="w-full py-2 bg-black text-white rounded"
+     >
+       로그인
+     </button>
+     {loginError && (
+       <p className="text-red-600 text-sm">{loginError}</p>
+     )}
+   </div>
+ ) : (
+     {/* 로그인 후 헤더 */}
+     <div className="flex justify-end gap-2">
+       <span className="text-sm text-gray-600">
+         안녕하세요, {session?.user?.email}님
+       </span>
+       <button
+         onClick={() => signOut()}  // NextAuth의 signOut만 사용!
+         className="text-red-600 underline text-sm"
+       >
+         로그아웃
+       </button>
+     </div>
 
         {/* 관리자 모드 */}
         {isAdmin && (
