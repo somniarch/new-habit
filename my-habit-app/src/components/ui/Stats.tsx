@@ -23,9 +23,27 @@ type StatsProps = {
   selectedDay: string;
 };
 
-export function Stats({ routines, onDownloadCsv, selectedDay }: StatsProps) {
+export interface Routine {
+  date: string;
+  day: string;
+  start: string;
+  end: string;
+  task: string;
+  done: boolean;
+  rating: number;
+  isHabit?: boolean;
+}
+
+interface StatsProps {
+  routines: Routine[];
+  selectedDay: string;
+  onDownloadCsv: () => void;
+}
+
+export function Stats({ routines, selectedDay, onDownloadCsv }: StatsProps) {
   // 주간 통계 (선택된 요일)
   const weekData = useMemo(() => {
+    const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
     const done = routines.filter((r) => r.day === selectedDay && r.done).length;
     const total = routines.filter((r) => r.day === selectedDay).length;
     return [
