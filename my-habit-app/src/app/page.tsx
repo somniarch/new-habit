@@ -18,8 +18,6 @@ type Routine = {
 const habitCandidates = ["깊은 숨 2분", "물 한잔", "짧은 산책", "스트레칭"];
 const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
 const dayLetters = fullDays.map((d) => d[0]);
-const [hasFetched5, setHasFetched5] = useState<Record<string, boolean>>({});
-const [hasFetched10, setHasFetched10] = useState<Record<string, boolean>>({});
 
 function getEncouragementAndHabit(task: string) {
   const lower = task.toLowerCase();
@@ -96,6 +94,8 @@ function formatMonthDay(date: Date, dayIndex: number) {
 }
 
 export default function Page() {
+  const [hasFetched5, setHasFetched5] = useState<Record<string, boolean>>({});
+  const [hasFetched10, setHasFetched10] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState("");
   const [userPw, setUserPw] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -489,38 +489,42 @@ Content: ${promptBase}
   }
 
   const generateDiaryAI = useCallback(async () => {
-   for (const day of fullDays) {
-     const completed = todayDiaryLogs[day] || [];
+    for (const day of fullDays) {
+      const completed = todayDiaryLogs[day] || [];
 
-     // ── 1) 5개 달성 시: 요약 + 그림 생성 (한 번만)
-     if (completed.length >= 5 && !hasFetched5[day]) {
-       setHasFetched5(prev => ({ ...prev, [day]: true }));
-       setLoadingAI(prev => ({ ...prev, [day]: true }));
+      // 5개 달성 시: 요약+그림 1회 호출
+      if (completed.length >= 5 && !hasFetched5[day]) {
+        setHasFetched5(prev => ({ ...prev, [day]: true }));
+        setLoadingAI(prev => ({ ...prev, [day]: true }));
 
-       const firstFive = completed.slice(0, 5);
-       const summary5 = await generateSummaryAI(day, firstFive);
-       setDiarySummariesAI(prev => ({ ...prev, [day]: summary5 }));
+        const firstFive = completed.slice(0, 5);
+        const summary5 = await generateSummaryAI(day, firstFive);
+        setDiarySummariesAI(prev => ({ ...prev, [day]: summary5 }));
+        const image5 = await generateImageAI(summary5);
+        setDiaryImagesAI(prev => ({ ...prev, [day]: image5 }));
 
-       const image5 = await generateImageAI(summary5);
-       setDiaryImagesAI(prev => ({ ...prev, [day]: image5 }));
+        setLoadingAI(prev => ({ ...prev, [day]: false }));
+      }
 
-       setLoadingAI(prev => ({ ...prev, [day]: false }));
-     }
+      // 10개 달성 시: 요약만 1회 호출
+      if (completed.length >= 10 && !hasFetched10[day]) {
+        setHasFetched10(prev => ({ ...prev, [day]: true }));
+        setLoadingAI(prev => ({ ...prev, [day]: true }));
 
-     // ── 2) 10개 달성 시: 요약만 업데이트 (한 번만)
-     if (completed.length >= 10 && !hasFetched10[day]) {
-       setHasFetched10(prev => ({ ...prev, [day]: true }));
-       setLoadingAI(prev => ({ ...prev, [day]: true }));
+        const nextFive = completed.slice(5, 10);
+        const summary10 = await generateSummaryAI(day, nextFive);
+        setDiarySummariesAI(prev => ({ ...prev, [day]: summary10 }));
 
-       const nextFive = completed.slice(5, 10);
-       const summary10 = await generateSummaryAI(day, nextFive);
-       setDiarySummariesAI(prev => ({ ...prev, [day]: summary10 }));
-
-       setLoadingAI(prev => ({ ...prev, [day]: false }));
-     }
-   }
- }, [todayDiaryLogs, routines, loadingAI, hasFetched5, hasFetched10]);
-
+        setLoadingAI(prev => ({ ...prev, [day]: false }));
+      }
+    }
+  }, [
+    todayDiaryLogs,
+    loadingAI,
+    hasFetched5,
+    hasFetched10,
+    /* routines, generateSummaryAI, generateImageAI 필요에 따라 추가 */
+  ]);
 
 useEffect(() => {
   (async () => {
