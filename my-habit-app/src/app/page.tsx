@@ -476,38 +476,37 @@ Content: ${promptBase}
     }
   }
 
-  const generateDiaryAI = useCallback(async () => {
-    for (const day of fullDays) {
-      const completedTasks = todayDiaryLogs[day]?.filter((task) =>
-        routines.find((r) => r.day === day && r.task === task && r.done)
-      ) || [];
-      if (completedTasks.length < 5) continue;
+ const generateDiaryAI = useCallback(async () => {
+  for (const day of fullDays) {
+    const completedTasks = todayDiaryLogs[day]?.filter((task) =>
+      routines.find((r) => r.day === day && r.task === task && r.done)
+    ) || [];
+    if (completedTasks.length < 5) continue;
 
-      // **최고 만족도 행동** 모아서 그림 프롬프트로 사용
-      const doneEntries = routines.filter(r => r.day === day && r.done);
-      const maxRating = Math.max(...doneEntries.map(r => r.rating));
-      const topTasks = doneEntries
-        .filter(r => r.rating === maxRating)
-        .map(r => r.task);
+    // **최고 만족도 행동** 모아서 요약 생성
+    const doneEntries = routines.filter(r => r.day === day && r.done);
+    const maxRating = Math.max(...doneEntries.map(r => r.rating));
+    const topTasks = doneEntries
+      .filter(r => r.rating === maxRating)
+      .map(r => r.task);
 
-      // 1) 하루에 5개 이상 달성 시에만
-      if (doneEntries.length < 5) continue;
+    if (doneEntries.length < 5) continue;
 
-      // 2) summaryIDle 생성 여부와 무관하게 topTasks로 이미지 생성 조건
-      if (!loadingAI[day] && topTasks.length > 0) {
-        const summary = await generateSummaryAI(day, completedTasks);
-        setDiarySummariesAI((prev) => ({ ...prev, [day]: summary }));
-      }
+    if (!loadingAI[day] && topTasks.length > 0) {
+      const summary = await generateSummaryAI(day, completedTasks);
+      setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
     }
-  }, [todayDiaryLogs, routines, loadingAI]);
+  }
+}, [todayDiaryLogs, routines, loadingAI]);
 
-  useEffect(() => {
-    (async () => {
-      for (const day of fullDays) {
-        if (diarySummariesAI[day] && !diaryImagesAI[day] && !loadingAI[day]) {
-          setLoadingAI((prev) => ({ ...prev, [day]: true }));
-        // CONTENT에 최고 만족 행동 묘사
-        // ★ 여기서 topTasks를 다시 계산
+
+useEffect(() => {
+  (async () => {
+    for (const day of fullDays) {
+      if (diarySummariesAI[day] && !diaryImagesAI[day] && !loadingAI[day]) {
+        setLoadingAI(prev => ({ ...prev, [day]: true }));
+
+        // ★ topTasks 계산
         const doneEntries = routines.filter(r => r.day === day && r.done);
         const maxRating = doneEntries.length
           ? Math.max(...doneEntries.map(r => r.rating))
@@ -515,22 +514,24 @@ Content: ${promptBase}
         const topTasks = doneEntries
           .filter(r => r.rating === maxRating)
           .map(r => r.task);
-         const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-         const generated = await generateImageAI(promptBase);
-         if (generated) {
-           setDiaryImagesAI((prev) => ({ ...prev, [day]: generated }));
-         }
-         setLoadingAI((prev) => ({ ...prev, [day]: false }));
-        }
-      }
-    })();
-  }, [diarySummariesAI, diaryImagesAI, loadingAI, routines]);  // routines 추가
+        const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
 
-  useEffect(() => {
-    if (selectedTab === "today-diary") {
-      generateDiaryAI();
+        const generated = await generateImageAI(promptBase);
+        if (generated) {
+          setDiaryImagesAI(prev => ({ ...prev, [day]: generated }));
+        }
+        setLoadingAI(prev => ({ ...prev, [day]: false }));
+      }
     }
-  }, [selectedTab, todayDiaryLogs, routines, generateDiaryAI]);
+  })();
+}, [diarySummariesAI, diaryImagesAI, loadingAI, routines]);
+
+
+useEffect(() => {
+  if (selectedTab === "today-diary") {
+    generateDiaryAI();
+  }
+}, [selectedTab, todayDiaryLogs, routines, generateDiaryAI]);
 
   return (
     <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
