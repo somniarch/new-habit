@@ -193,7 +193,7 @@ function formatMonthDay(date: Date, dayIndex: number) {
     saveRegisteredUsers(updated);
     setNewUserId("");
     setNewUserPw("");
-    setToast({ emoji: "✅", message: 사용자 ${newUserId} 등록 완료! });
+    setToast({ emoji: "✅", message: `사용자 ${newUserId} 등록 완료!` });
   };
   
 
