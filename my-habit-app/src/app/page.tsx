@@ -795,7 +795,7 @@ return (
                                 </div>
                               )}
                             </div>
-                          ) : (
+ ) : (
                             <div className="text-center my-2">
                               <button
                                 onClick={() => handleFetchHabitSuggestions(idx)}
@@ -952,3 +952,34 @@ return (
                {(() => {
                  const completedTasks = todayDiaryLogs[selectedDay] || [];
                  if (completedTasks.length < 5) return null;
+                 const idx = fullDays.indexOf(selectedDay);
+                 const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
+                 const summary = diarySummariesAI[selectedDay] || warmSummary(completedTasks);
+                 const imageUrl = diaryImagesAI[selectedDay];
+                 return (
+                   <div key={selectedDay} className="mb-6">
+                     <h3 className="font-semibold">{diaryDateStr}</h3>
+                     <p className="mb-2 whitespace-pre-line">{summary}</p>
+                     {/* … 이미지 표시 … */}
+                      {imageUrl && (
+                        <div className="mt-2 w-full rounded overflow-hidden relative" style={{ aspectRatio: "4/3" }}>
+                          <Image
+                            src={imageUrl}
+                            alt="오늘의 다이어리 일러스트"
+                            fill
+                            style={{ objectFit: "cover" }}
+                            priority
+                          />
+                    </div>
+                  )}
+                </div>
+                 );
+               })()}
+
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
