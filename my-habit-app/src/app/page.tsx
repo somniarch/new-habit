@@ -795,7 +795,7 @@ return (
                                 </div>
                               )}
                             </div>
- ) : (
+                          ) : (
                             <div className="text-center my-2">
                               <button
                                 onClick={() => handleFetchHabitSuggestions(idx)}
@@ -820,30 +820,17 @@ return (
 
     {/* ── 주간 통계 ── */}
     <div>
-      <h3 className="mb-2 font-semibold text-sm">이번 주 완료율 ({selectedDay})</h3>
+      <h3 className="mb-2 font-semibold text-sm">이번 주 ({selectedDay})</h3>
       <ResponsiveContainer width="100%" height={150}>
         <BarChart
           data={[{
             name: selectedDay,
-            value: (() => {
+            Completion: (() => {
               const done = routines.filter(r => r.day === selectedDay && r.done).length;
               const total = routines.filter(r => r.day === selectedDay).length;
-              return total ? Math.round((done / total) * 100) : 0;
-            })()
-          }]}
-        >
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="value" fill="#0f172a" />
-        </BarChart>
-      </ResponsiveContainer>
-      <h3 className="mt-4 mb-2 font-semibold text-sm">이번 주 만족도 ({selectedDay})</h3>
-      <ResponsiveContainer width="100%" height={150}>
-        <BarChart
-          data={[{
-            name: selectedDay,
-            value: (() => {
+              return total ? Math.round(done / total * 100) : 0;
+            })(),
+            Satisfaction: (() => {
               const doneArr = routines.filter(r => r.day === selectedDay && r.done);
               return doneArr.length
                 ? Math.round(doneArr.reduce((s, r) => s + r.rating, 0) / doneArr.length)
@@ -854,14 +841,15 @@ return (
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
-          <Bar dataKey="value" fill="#1e40af" />
+          <Bar dataKey="Completion" fill="#0f172a" />
+          <Bar dataKey="Satisfaction" fill="#1e40af" />
         </BarChart>
       </ResponsiveContainer>
     </div>
 
     {/* ── 월간 통계 ── */}
     <div>
-      <h3 className="mb-2 font-semibold text-sm">이번 달 완료율 ({selectedDay})</h3>
+      <h3 className="mb-2 font-semibold text-sm">이번 달 ({selectedDay})</h3>
       <ResponsiveContainer width="100%" height={150}>
         <BarChart
           data={(() => {
@@ -869,64 +857,38 @@ return (
             const year = today.getFullYear();
             const month = today.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const arr: { name: string; value: number }[] = [];
-
+            const arr: { name: string; Completion: number; Satisfaction: number }[] = [];
+    
             for (let d = 1; d <= daysInMonth; d++) {
               const dt = new Date(year, month, d);
+              // JavaScript에서 getDay(): 일=0, 월=1 ... 토=6
+              // fullDays 배열은 월=0 인덱스이므로 +1 해줍니다
               if (dt.getDay() === fullDays.indexOf(selectedDay) + 1) {
                 const iso = dt.toISOString().split("T")[0];
                 const dayRoutines = routines.filter(r => r.date === iso);
                 const doneCount = dayRoutines.filter(r => r.done).length;
+                const sat = doneCount
+                  ? Math.round(dayRoutines.filter(r => r.done).reduce((sum, r) => sum + r.rating, 0) / doneCount)
+                  : 0;
+    
                 arr.push({
                   name: `${d}일`,
-                  value: dayRoutines.length
+                  Completion: dayRoutines.length
                     ? Math.round((doneCount / dayRoutines.length) * 100)
                     : 0,
+                  Satisfaction: sat,
                 });
               }
             }
-
+    
             return arr;
           })()}
         >
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
-          <Bar dataKey="value" fill="#0f172a" />
-        </BarChart>
-      </ResponsiveContainer>
-      <h3 className="mt-4 mb-2 font-semibold text-sm">이번 달 만족도 ({selectedDay})</h3>
-      <ResponsiveContainer width="100%" height={150}>
-        <BarChart
-          data={(() => {
-            const today = new Date(currentDate);
-            const year = today.getFullYear();
-            const month = today.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const arr: { name: string; value: number }[] = [];
-
-            for (let d = 1; d <= daysInMonth; d++) {
-              const dt = new Date(year, month, d);
-              if (dt.getDay() === fullDays.indexOf(selectedDay) + 1) {
-                const iso = dt.toISOString().split("T")[0];
-                const dayRoutines = routines.filter(r => r.date === iso && r.done);
-                const value = dayRoutines.length
-                  ? Math.round(dayRoutines.reduce((sum, r) => sum + r.rating, 0) / dayRoutines.length)
-                  : 0;
-                arr.push({
-                  name: `${d}일`,
-                  value,
-                });
-              }
-            }
-
-            return arr;
-          })()}
-        >
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="value" fill="#1e40af" />
+          <Bar dataKey="Completion" fill="#0f172a" />
+          <Bar dataKey="Satisfaction" fill="#1e40af" />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -966,9 +928,9 @@ return (
                           <Image
                             src={imageUrl}
                             alt="오늘의 다이어리 일러스트"
-                            fill
-                            style={{ objectFit: "cover" }}
-                            priority
+                            fill                             // 부모 <div> 를 꽉 채우도록
+                            style={{ objectFit: "cover" }}  // 이미지 비율 유지하며 잘라내기
+                            priority                         // LCP 최적화 (선택)
                           />
                     </div>
                   )}
