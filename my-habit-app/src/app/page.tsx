@@ -400,7 +400,7 @@ export default function Page() {
   async function generateSummaryAI(day: string, tasks: string[]): Promise<string> {
     try {
       const prompt = `...`;
-      const res = await fetch("/api/openai/chat", {  // 경로 확인
+      const res = await fetch("/openai/chat", {  // 경로 확인
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
@@ -420,7 +420,7 @@ export default function Page() {
     try {
       const prompt = `A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art. Gentle, muted colors like orange, yellow, brown, and green. The composition should feel peaceful and heartwarming, like a moment captured in a personal journal. No humans should appear in the image. The drawing should evoke quiet satisfaction and mindfulness.\n\nContent: ${promptBase}`;
 
-      const res = await fetch("/api/openai/generate-image", {  // 경로 확인
+      const res = await fetch("/openai/generate-image", {  // 경로 확인
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
