@@ -616,23 +616,31 @@ useEffect(() => {
             </div>
           )}
         </div>
-      ) : (
-        <>
-          <div className="flex justify-end gap-2">
-            <span className="text-sm text-gray-600">안녕하세요, {userId}님</span>
-            <button
-              onClick={handleLogout}
-              className="text-red-600 underline text-sm hover:text-red-800 transition"
-            >
-              로그아웃
-            </button>
-          </div>
+        ) : (
+          <>
+            {adminModeActive && (
+              <div className="mt-4 border rounded p-4 bg-gray-50">
+                {/* 관리자 전용: 사용자 등록 UI */}
+                <h3 className="font-semibold mb-2">사용자 등록 (관리자 전용)</h3>
+                {/* …나머지 입력 필드와 버튼… */}
+              </div>
+            )}
 
-          {isAdmin && (
-            <button className="mb-4 px-4 py-2 bg-red-600 text-white rounded font-semibold">
-              관리자 모드
-            </button>
-          )}
+            <div className="flex justify-end gap-2">
+              <span className="text-sm text-gray-600">안녕하세요, {userId}님</span>
+              <button
+                onClick={handleLogout}
+                className="text-red-600 underline text-sm hover:text-red-800 transition"
+              >
+                로그아웃
+              </button>
+            </div>
+
+            {isAdmin && (
+              <button className="mb-4 px-4 py-2 bg-red-600 text-white rounded font-semibold">
+                관리자 모드
+              </button>
+            )}
 
           <div className="flex justify-center items-center gap-4">
             <button aria-label="Previous Week" onClick={handlePrevWeek} className="px-3 py-1 text-lg font-bold">
