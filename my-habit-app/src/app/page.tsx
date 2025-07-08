@@ -346,7 +346,7 @@ export default function Page() {
   setAiHabitError(null);
 
   try {
-    const res = await fetch("/app/openai/chat", {
+    const res = await fetch("/openai/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prevTask, nextTask }),
