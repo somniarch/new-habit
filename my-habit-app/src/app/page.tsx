@@ -180,14 +180,15 @@ function formatMonthDay(date: Date, dayIndex: number) {
 
    const handleLogout = () => signOut({ redirect: false });
 
+      // 수정: 사용자 등록 전용 함수로 분리
+  const handleAddUser = () => {
     const users = getRegisteredUsers();
     if (users.find((u) => u.id === newUserId)) {
       setUserAddError("이미 존재하는 아이디입니다.");
-      return;
+      return;                   // ← 이제 함수 내부이므로 허용
     }
     const updated = [...users, { id: newUserId, pw: newUserPw }];
     saveRegisteredUsers(updated);
-    setUserAddError("");
     setNewUserId("");
     setNewUserPw("");
     setToast({ emoji: "✅", message: `사용자 ${newUserId} 등록 완료!` });
@@ -495,57 +496,9 @@ return (
           {!isLoggedIn ? (
         <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
           <div className="text-right">
-            <button onClick={() => setSignUpMode(!signUpMode)} className="text-sm underline">
-              {signUpMode ? "로그인 모드로 전환" : "회원가입 모드로 전환"}
-            </button>
-          </div>
-          <input
-            type="email"
-            placeholder="이메일"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-          />
-          <input
-            type="password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-          />
-          {authError && <p className="text-red-600">{authError}</p>}
-          <button
-            onClick={signUpMode ? handleSignUp : handleLogin}
-            className="bg-blue-600 text-white px-6 py-2 rounded font-semibold"
-          >
-            {signUpMode ? "회원가입" : "로그인"}
-          </button>
-        </div>
+            
 
-          {loginError && <p className="text-red-600">{loginError}</p>}
-
-          {adminModeActive && (
-            <div className="mt-4 border rounded p-4 bg-gray-50">
-              <h3 className="font-semibold mb-2">사용자 등록 (관리자 전용)</h3>
-              <input
-                type="text"
-                placeholder="새 사용자 아이디"
-                value={newUserId}
-                onChange={(e) => setNewUserId(e.target.value)}
-                className="border rounded px-3 py-2 w-full mb-2"
-              />
-              <input
-                type="password"
-                placeholder="새 사용자 비밀번호"
-                value={newUserPw}
-                onChange={(e) => setNewUserPw(e.target.value)}
-                className="border rounded px-3 py-2 w-full mb-2"
-              />
-              {userAddError && <p className="text-red-600 mb-2">{userAddError}</p>}
-              <button
-                onClick={handleAddUser}
-                className="bg-green-600 text-white px-4 py-2 rounded font-semibold hover:bg-green-700 transition"
-              >
+         <button onClick={handleAddUser}>
                 사용자 등록
               </button>
             </div>
