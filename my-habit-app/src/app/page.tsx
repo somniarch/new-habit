@@ -489,7 +489,7 @@ The drawing should evoke quiet satisfaction and mindfulness.
     return "";
   }
 }
-
+}
 
 useEffect(() => {
     (async () => {
