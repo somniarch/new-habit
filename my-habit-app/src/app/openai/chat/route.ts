@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
     const { prevTask, nextTask } = await request.json();
     if (!prevTask && !nextTask) {
       return new Response(
-        "No context provided (prevTask or nextTask required)",
-        { status: 400 }
+        JSON.stringify({ error: "No context provided (prevTask or nextTask required)" }),
+        { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
       );
     }
 
@@ -51,17 +51,26 @@ export async function POST(request: NextRequest) {
       .filter(line => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
 
     if (suggestions.length === 0) {
-      return new Response("No suggestions generated", { status: 502 });
+      return new Response(
+        JSON.stringify({ error: "No suggestions generated" }),
+        { status: 502, headers: { "Content-Type": "application/json; charset=utf-8" } }
+      );
     }
 
-    // 문자열로 반환
-    return new Response(suggestions.join("\n"), {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-      status: 200,
-    });
+    // JSON 형태로 반환
+    return new Response(
+      JSON.stringify({ result: suggestions }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+      }
+    );
   } catch (error: unknown) {
     console.error("[Habit API] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(message, { status: 500 });
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { "Content-Type": "application/json; charset=utf-8" } }
+    );
   }
 }
