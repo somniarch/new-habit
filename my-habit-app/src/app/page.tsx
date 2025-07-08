@@ -1,9 +1,7 @@
 'use client';
-
 import React, { useState, useEffect } from "react";
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
-
 
 type Routine = {
   date: string; 
@@ -785,7 +783,17 @@ return (
               </div>
             </div>
           )}
-
+          
+        {selectedTab === "tracker" && (
+          <div className="mt-6">
+            <h2 className="text-center font-semibold text-xl mb-4">통계</h2>
+            <WeeklySummary
+              routines={routines}
+              currentDate={currentDate.toISOString().split("T")[0]}
+            />
+          </div>
+        )}
+          
           {selectedTab === "today-diary" && (
             <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
               <h2 className="text-center font-semibold text-xl mb-4">오늘 일기</h2>
