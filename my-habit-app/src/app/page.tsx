@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image"; 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 type Routine = {
@@ -274,15 +275,24 @@ export default function Page() {
 
   const addHabitBetween = (idx: number, habit: string) => {
     if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
-    const habitRoutine: Routine = {
-      day: selectedDay,
-      start: "(습관)",
-      end: "",
-      task: habit,
-      done: false,
-      rating: 0,
-      isHabit: true,
-    };
+  // ① 선택된 요일의 실제 날짜 계산 (YYYY-MM-DD)
+  const today = new Date(currentDate);
+  const dayIdx = fullDays.indexOf(selectedDay);       // 월=0 … 일=6
+  const realDate = new Date(today);
+  realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
+  const isoDate = realDate.toISOString().split("T")[0];
+
+  // ② date 필드를 포함한 habitRoutine 생성
+  const habitRoutine: Routine = {
+    date: isoDate,
+    day: selectedDay,
+    start: "(습관)",
+    end: "",
+    task: habit,
+    done: false,
+    rating: 0,
+    isHabit: true,
+  };
     const copy = [...routines];
     copy.splice(idx + 1, 0, habitRoutine);
     setRoutines(copy);
@@ -913,14 +923,18 @@ useEffect(() => {
                      <h3 className="font-semibold">{diaryDateStr}</h3>
                      <p className="mb-2 whitespace-pre-line">{summary}</p>
                      {/* … 이미지 표시 … */}
-                     {imageUrl && (
-                       <img
-                         src={imageUrl}
-                         alt="오늘의 다이어리 일러스트"
-                         className="mt-2 w-full rounded"
-                       />
-                     )}
-                   </div>
+                      {imageUrl && (
+                        <div className="mt-2 w-full rounded overflow-hidden relative" style={{ aspectRatio: "4/3" }}>
+                          <Image
+                            src={imageUrl}
+                            alt="오늘의 다이어리 일러스트"
+                            fill                             // 부모 <div> 를 꽉 채우도록
+                            style={{ objectFit: "cover" }}  // 이미지 비율 유지하며 잘라내기
+                            priority                         // LCP 최적화 (선택)
+                          />
+                    </div>
+                  )}
+                </div>
                  );
                })()}
 
