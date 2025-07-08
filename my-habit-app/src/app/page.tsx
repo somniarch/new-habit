@@ -220,25 +220,28 @@ export default function Page() {
     }
   }, [todayDiaryLogs, diaryLogsKey, userId]);
 
-    const completionData = fullDays.map((day) => {
-      const total = routines.filter(r => r.day === day).length;
-      const done  = routines.filter(r => r.day === day && r.done).length;
-      return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
-}); 
+  // ── 주간 완료율 데이터
+  const completionData = fullDays.map((day) => {
+    const total = routines.filter(r => r.day === day).length;
+    const done  = routines.filter(r => r.day === day && r.done).length;
+    return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
+  });
   
+  // ── 주간 만족도 데이터
+  const satisfactionData = fullDays.map((day) => {
     const filtered = routines.filter((r) => r.day === day && r.done);
     const avg = filtered.length
       ? Math.round(filtered.reduce((acc, cur) => acc + cur.rating, 0) / filtered.length)
       : 0;
     return { name: day, Satisfaction: avg };
-});
-
-// 전체 로그를 CSV로 내보내는 새로운 downloadCSV
-function downloadCSV(data: Routine[]) {
-  if (data.length === 0) {
-    alert("내보낼 데이터가 없습니다.");
-    return;
-}
+  });
+  
+  // 전체 로그를 CSV로 내보내는 새로운 downloadCSV
+  function downloadCSV(data: Routine[]) {
+    if (data.length === 0) {
+      alert("내보낼 데이터가 없습니다.");
+      return;
+    }
 
   // 헤더 정의
   const headers = [
