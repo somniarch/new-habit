@@ -186,7 +186,31 @@ ${prompt}
       .split(/\r?\n+/)
       .map(line => line.replace(/^[-*]\s*/, "").trim())
       .filter(line => line)
-      .filter(line => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
+      .filter(line => /^\d+분\s[가-힣]+.*$/u.test(line));
+
+    console.log("[Habit API] Cleaned suggestions:", suggestions);
+    // 이모지가 없는 경우 키워드 기반 디폴트 이모지 붙이기
+    const emojiMap: Record<string, string> = {
+      '걷': '🚶‍♀️',
+      '숨': '🌬️',
+      '명상': '🧘‍♂️',
+      '스트레칭': '🤸‍♀️',
+      '물': '💧',
+      'default': '✨'
+    };
+    const finalSuggestions = suggestions.map(item => {
+      // 이미 이모지가 있으면 그대로
+      if (/\p{Emoji}/u.test(item)) return item;
+      // 키워드 매핑
+      for (const [key, emoji] of Object.entries(emojiMap)) {
+        if (key !== 'default' && item.includes(key)) {
+          return `${item}${emoji}`;
+        }
+      }
+      // 매핑 없으면 기본 이모지
+      return `${item}${emojiMap.default}`;
+    });
+    console.log("[Habit API] Final suggestions with default emoji:", finalSuggestions);
 
     console.log("[API] Filtered suggestions:", suggestions);
 
@@ -205,7 +229,7 @@ ${prompt}
     }
 
     return new NextResponse(
-      JSON.stringify({ result: suggestions }),
+      JSON.stringify({ result: finalSuggestions }),
       {
         status: 200,
         headers: {
