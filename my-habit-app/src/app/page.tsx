@@ -521,9 +521,9 @@ useEffect(() => {
           const maxRating = Math.max(...doneEntries.map(r => r.rating));
           const topTasks = doneEntries.filter(r => r.rating === maxRating).map(r => r.task);
           const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-          const imageUrl = await generateImageAI(promptBase);
+          const imageUrl = await generateImageAI(promptBase, completed);
           setDiaryImagesAI(prev=>({ ...prev, [iso]: imageUrl }));
-          } else if (count >= 10 && !generated10[day]) {
+        } else if (count >= 10 && !generated10[day]) {
           setGenerated10(prev => ({ ...prev, [day]: true }));
           const summary = await generateSummaryAI(day, completed);
           setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
