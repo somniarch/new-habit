@@ -18,6 +18,8 @@ type Routine = {
 const habitCandidates = ["깊은 숨 2분", "물 한잔", "짧은 산책", "스트레칭"];
 const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
 const dayLetters = fullDays.map((d) => d[0]);
+const [hasFetched5, setHasFetched5] = useState<Record<string, boolean>>({});
+const [hasFetched10, setHasFetched10] = useState<Record<string, boolean>>({});
 
 function getEncouragementAndHabit(task: string) {
   const lower = task.toLowerCase();
@@ -486,28 +488,38 @@ Content: ${promptBase}
     }
   }
 
- const generateDiaryAI = useCallback(async () => {
-  for (const day of fullDays) {
-    const completedTasks = todayDiaryLogs[day]?.filter((task) =>
-      routines.find((r) => r.day === day && r.task === task && r.done)
-    ) || [];
-    if (completedTasks.length < 5) continue;
+  const generateDiaryAI = useCallback(async () => {
+   for (const day of fullDays) {
+     const completed = todayDiaryLogs[day] || [];
 
-    // **최고 만족도 행동** 모아서 요약 생성
-    const doneEntries = routines.filter(r => r.day === day && r.done);
-    const maxRating = Math.max(...doneEntries.map(r => r.rating));
-    const topTasks = doneEntries
-      .filter(r => r.rating === maxRating)
-      .map(r => r.task);
+     // ── 1) 5개 달성 시: 요약 + 그림 생성 (한 번만)
+     if (completed.length >= 5 && !hasFetched5[day]) {
+       setHasFetched5(prev => ({ ...prev, [day]: true }));
+       setLoadingAI(prev => ({ ...prev, [day]: true }));
 
-    if (doneEntries.length < 5) continue;
+       const firstFive = completed.slice(0, 5);
+       const summary5 = await generateSummaryAI(day, firstFive);
+       setDiarySummariesAI(prev => ({ ...prev, [day]: summary5 }));
 
-    if (!loadingAI[day] && topTasks.length > 0) {
-      const summary = await generateSummaryAI(day, completedTasks);
-      setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
-    }
-  }
-}, [todayDiaryLogs, routines, loadingAI]);
+       const image5 = await generateImageAI(summary5);
+       setDiaryImagesAI(prev => ({ ...prev, [day]: image5 }));
+
+       setLoadingAI(prev => ({ ...prev, [day]: false }));
+     }
+
+     // ── 2) 10개 달성 시: 요약만 업데이트 (한 번만)
+     if (completed.length >= 10 && !hasFetched10[day]) {
+       setHasFetched10(prev => ({ ...prev, [day]: true }));
+       setLoadingAI(prev => ({ ...prev, [day]: true }));
+
+       const nextFive = completed.slice(5, 10);
+       const summary10 = await generateSummaryAI(day, nextFive);
+       setDiarySummariesAI(prev => ({ ...prev, [day]: summary10 }));
+
+       setLoadingAI(prev => ({ ...prev, [day]: false }));
+     }
+   }
+ }, [todayDiaryLogs, routines, loadingAI, hasFetched5, hasFetched10]);
 
 
 useEffect(() => {
