@@ -492,17 +492,24 @@ useEffect(() => {
 
 
 return (
-      <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
-      {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
-
-      {!isLoggedIn ? (
-        <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
-          <div className="text-right">
-            <button onClick={handleLocalLogin}>로그인</button>
-            <button onClick={handleAddUser}>사용자 등록</button>
-          </div>
+  <div>  
+    {!isLoggedIn ? (
+      <div className="auth-form …">
+        {/* 로그인 & 회원가입 버튼 */}
+        <button onClick={handleLocalLogin}>로그인</button>
+        <button onClick={handleAddUser}>사용자 등록</button>
+      </div>
+    ) : (
+      <>
+        {/* 로그인 후 화면 */}
+        <div className="flex justify-end gap-2">
+          <span>안녕하세요, {session.user.email}님</span>
+          <button onClick={handleLogout}>로그아웃</button>
         </div>
-      ) : (
+      </>
+    )}
+  </div>
+);
         <>
           {/* 로그인 후 화면 */}
           <div className="flex justify-end gap-2">
