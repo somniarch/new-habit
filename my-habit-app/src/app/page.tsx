@@ -499,7 +499,7 @@ Content: ${promptBase}
         setDiarySummariesAI((prev) => ({ ...prev, [day]: summary }));
       }
     }
-  }, [todayDiaryLogs, routines, diarySummariesAI, loadingAI]);
+  }, [todayDiaryLogs, routines, loadingAI]);
 
   useEffect(() => {
     (async () => {
@@ -516,9 +516,9 @@ Content: ${promptBase}
           .filter(r => r.rating === maxRating)
           .map(r => r.task);
          const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-         const imageUrl = await generateImageAI(promptBase);
-         if (imageUrl) {
-          setDiaryImagesAI((prev) => ({ ...prev, [day]: imageUrl }));
+         const generated = await generateImageAI(promptBase);
+         if (generated) {
+           setDiaryImagesAI((prev) => ({ ...prev, [day]: generated }));
          }
          setLoadingAI((prev) => ({ ...prev, [day]: false }));
         }
