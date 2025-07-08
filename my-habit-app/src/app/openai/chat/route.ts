@@ -1,6 +1,6 @@
 // new-habit/my-habit-app/src/app/openai/chat/route.ts
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
