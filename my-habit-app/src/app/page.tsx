@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image"; 
- import dynamic from "next/dynamic";
+import dynamic from "next/dynamic";
+import WeeklySummary from "@/components/ui/WeeklySummary";
 
  const ResponsiveContainer = dynamic(
    () => import("recharts").then((mod) => mod.ResponsiveContainer),
