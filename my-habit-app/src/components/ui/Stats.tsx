@@ -1,39 +1,24 @@
 // components/Stats.tsx
 "use client";
-
 import React, { useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-type Routine = {
-  day: string;
-  done: boolean;
-  rating: number;
-};
+// 1) fullDays 를 파일 최상단에 한 번만 정의
+const fullDays = ["월","화","수","목","금","토","일"];
 
-type StatsProps = {
-  routines: Routine[];
-  onDownloadCsv: () => void;
-  selectedDay: string;
-};
-
+// 2) Routine 타입을 한 번만 선언
 export interface Routine {
   date: string;
   day: string;
-  start: string;
-  end: string;
-  task: string;
   done: boolean;
   rating: number;
+  start?: string;
+  end?: string;
+  task?: string;
   isHabit?: boolean;
 }
 
+// 3) StatsProps 타입을 한 번만 선언
 interface StatsProps {
   routines: Routine[];
   selectedDay: string;
@@ -41,51 +26,41 @@ interface StatsProps {
 }
 
 export function Stats({ routines, selectedDay, onDownloadCsv }: StatsProps) {
-  // 주간 통계 (선택된 요일)
+  // 주간 통계
   const weekData = useMemo(() => {
-    const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
-    const done = routines.filter((r) => r.day === selectedDay && r.done).length;
-    const total = routines.filter((r) => r.day === selectedDay).length;
-    return [
-      {
-        name: selectedDay,
-        Completion: total ? Math.round((done / total) * 100) : 0,
-        Satisfaction: done
-          ? Math.round(
-              routines
-                .filter((r) => r.day === selectedDay && r.done)
-                .reduce((acc, cur) => acc + cur.rating, 0) / done
-            )
-          : 0,
-      },
-    ];
+    const done = routines.filter(r => r.day === selectedDay && r.done).length;
+    const total = routines.filter(r => r.day === selectedDay).length;
+    return [{
+      name: selectedDay,
+      Completion: total ? Math.round((done/total)*100) : 0,
+      Satisfaction: done
+        ? Math.round(routines
+            .filter(r => r.day===selectedDay && r.done)
+            .reduce((sum,r)=>sum+r.rating,0) / done)
+        : 0,
+    }];
   }, [routines, selectedDay]);
 
-  // 월간 통계 (선택된 요일)
+  // 월간 통계
   const monthData = useMemo(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date(), year = today.getFullYear(), month = today.getMonth();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
     const arr: { name: string; Completion: number; Satisfaction: number }[] = [];
 
     for (let d = 1; d <= daysInMonth; d++) {
       const dt = new Date(year, month, d);
-      // fullDays 인덱스(+1) 와 getDay() 맞추기
+      // fullDays 에서 요일 매핑
       if (dt.getDay() === fullDays.indexOf(selectedDay) + 1) {
         const iso = dt.toISOString().split("T")[0];
-        const dayRoutines = routines.filter((r) => (r as any).date === iso);
-        const doneCount = dayRoutines.filter((r) => r.done).length;
+        const dayRoutines = routines.filter(r => r.date === iso);
+        const doneCount = dayRoutines.filter(r => r.done).length;
         const sat = doneCount
-          ? Math.round(
-              dayRoutines.filter((r) => r.done).reduce((sum, r) => sum + r.rating, 0) /
-                doneCount
-            )
+          ? Math.round(dayRoutines.filter(r=>r.done).reduce((sum,r)=>sum+r.rating,0)/doneCount)
           : 0;
         arr.push({
           name: `${d}일`,
-          Completion: dayRoutines.length
-            ? Math.round((doneCount / dayRoutines.length) * 100)
+          Completion: dayRoutines.length 
+            ? Math.round((doneCount/dayRoutines.length)*100) 
             : 0,
           Satisfaction: sat,
         });
@@ -138,6 +113,3 @@ export function Stats({ routines, selectedDay, onDownloadCsv }: StatsProps) {
     </div>
   );
 }
-
-// fullDays는 Page.tsx에서 import하거나 다시 정의하세요
-const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
