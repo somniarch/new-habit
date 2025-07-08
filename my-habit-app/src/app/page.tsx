@@ -94,8 +94,6 @@ function formatMonthDay(date: Date, dayIndex: number) {
 }
 
 export default function Page() {
-  const [hasFetched5, setHasFetched5] = useState<Record<string, boolean>>({});
-  const [hasFetched10, setHasFetched10] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState("");
   const [userPw, setUserPw] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -488,43 +486,29 @@ Content: ${promptBase}
     }
   }
 
-  const generateDiaryAI = useCallback(async () => {
-    for (const day of fullDays) {
-      const completed = todayDiaryLogs[day] || [];
+ const generateDiaryAI = useCallback(async () => {
+  for (const day of fullDays) {
+    const completedTasks = todayDiaryLogs[day]?.filter((task) =>
+      routines.find((r) => r.day === day && r.task === task && r.done)
+    ) || [];
+    if (completedTasks.length < 5) continue;
 
-      // 5개 달성 시: 요약+그림 1회 호출
-      if (completed.length >= 5 && !hasFetched5[day]) {
-        setHasFetched5(prev => ({ ...prev, [day]: true }));
-        setLoadingAI(prev => ({ ...prev, [day]: true }));
+    // **최고 만족도 행동** 모아서 요약 생성
+    const doneEntries = routines.filter(r => r.day === day && r.done);
+    const maxRating = Math.max(...doneEntries.map(r => r.rating));
+    const topTasks = doneEntries
+      .filter(r => r.rating === maxRating)
+      .map(r => r.task);
 
-        const firstFive = completed.slice(0, 5);
-        const summary5 = await generateSummaryAI(day, firstFive);
-        setDiarySummariesAI(prev => ({ ...prev, [day]: summary5 }));
-        const image5 = await generateImageAI(summary5);
-        setDiaryImagesAI(prev => ({ ...prev, [day]: image5 }));
+    if (doneEntries.length < 5) continue;
 
-        setLoadingAI(prev => ({ ...prev, [day]: false }));
-      }
-
-      // 10개 달성 시: 요약만 1회 호출
-      if (completed.length >= 10 && !hasFetched10[day]) {
-        setHasFetched10(prev => ({ ...prev, [day]: true }));
-        setLoadingAI(prev => ({ ...prev, [day]: true }));
-
-        const nextFive = completed.slice(5, 10);
-        const summary10 = await generateSummaryAI(day, nextFive);
-        setDiarySummariesAI(prev => ({ ...prev, [day]: summary10 }));
-
-        setLoadingAI(prev => ({ ...prev, [day]: false }));
-      }
+    if (!loadingAI[day] && topTasks.length > 0) {
+      const summary = await generateSummaryAI(day, completedTasks);
+      setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
     }
-  }, [
-    todayDiaryLogs,
-    loadingAI,
-    hasFetched5,
-    hasFetched10,
-    /* routines, generateSummaryAI, generateImageAI 필요에 따라 추가 */
-  ]);
+  }
+}, [todayDiaryLogs, routines, loadingAI]);
+
 
 useEffect(() => {
   (async () => {
