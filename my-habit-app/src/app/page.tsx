@@ -218,11 +218,14 @@ function formatMonthDay(date: Date, dayIndex: number) {
     rating: 0,
     isHabit: true,
   };
-    const copy = [...routines];
-    copy.splice(idx + 1, 0, habitRoutine);
-    setRoutines(copy);
-    setHabitSuggestionIdx(null);
-  };
+ const updated = [...routines.slice(0, idx + 1), habitRoutine, ...routines.slice(idx + 1)];
+await fetch('/api/routines', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ routines: updated }),
+});
+reloadRoutines(); // 최신화
+setHabitSuggestionIdx(null);
 
 
 // CSV 다운로드 함수
@@ -281,19 +284,22 @@ const handleExportCSV = () => {
     const isoDate = realDate.toISOString().split("T")[0];
 
     // 2) routines에 date 필드 포함해서 추가
-    setRoutines(prev => [
-      ...prev,
-      {
-        date: isoDate,
-        day: selectedDay,
-        start: newRoutine.start,
-        end: newRoutine.end,
-        task: newRoutine.task,
-        done: false,
-        rating: 0,
-        isHabit: false,
-      },
-    ]);
+    const newRoutineObj = {
+   date: isoDate,
+   day: selectedDay,
+   start: newRoutine.start,
+   end: newRoutine.end,
+   task: newRoutine.task,
+   done: false,
+   rating: 0,
+   isHabit: false,
+ };
+ await fetch('/api/routines', {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify(newRoutineObj),
+ });
+ reloadRoutines();
 
     // 3) 입력 필드 초기화
     setNewRoutine({ start: "08:00", end: "09:00", task: "" });
@@ -303,7 +309,7 @@ const handleExportCSV = () => {
     if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
     const copy = [...routines];
     copy[idx].done = !copy[idx].done;
-    setRoutines(copy);
+    reloadRoutines(updated, false);
 
     if (!copy[idx].done) return;
 
@@ -325,9 +331,14 @@ const handleExportCSV = () => {
 
   const setRating = (idx: number, rating: number) => {
     if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
-    const copy = [...routines];
-    copy[idx].rating = rating;
-    setRoutines(copy);
+    const updated = [...routines];
+ updated[idx] = { ...updated[idx], done: !updated[idx].done };
+ await fetch('/api/routines', {
+   method: 'PATCH',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ routines: updated }),
+ });
+ reloadRoutines();
   };
 
     async function fetchHabitSuggestions(
