@@ -138,6 +138,8 @@ function formatMonthDay(date: Date, dayIndex: number) {
     if (typeof window === "undefined") return;
     localStorage.setItem(storedUsersKey, JSON.stringify(users));
   };
+   // ↓ 로그인 로직은 이렇게 함수로 묶어 주세요
+  const handleLocalLogin = () => {
     const users = getRegisteredUsers();
     const found = users.find((u) => u.id === userId && u.pw === userPw);
     if (found) {
