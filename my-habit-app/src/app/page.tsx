@@ -439,59 +439,24 @@ export default function Page() {
 
   };
 
-  async function generateSummaryAI(_day: string, _tasks: string[]): Promise<string> {
-  try {
-    const prompt = `다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:\n${_tasks.join(", ")}\n이 내용을 바탕으로 따뜻하고 긍정적인 응원의 메시지와 함께 짧게 요약해 주세요.`;
-    const res = await fetch("/openai/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
-    const data = await res.json();
-    if (res.ok && data.result) {
-      return data.result;
+   async function generateSummaryAI(_day: string, _tasks: string[]): Promise<string> {
+    try {
+      const prompt = `다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:\n${_tasks.join(", ")}\n이 내용을 바탕으로 따뜻하고 긍정적인 응원의 메시지와 함께 짧게 요약해 주세요.`;
+      const res = await fetch("/openai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      if (res.ok && data.result) {
+        return data.result;
+      }
+      return "";
+    } catch (e) {
+      console.error(e);
+      return "";
     }
-    return "";
-  } catch (e) {
-    console.error(e);
-    return "";
   }
-}
-
-export default function DiarySection({ day, tasks }: { day: string; tasks: string[] }) {
-  const [summary, setSummary] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    // 딱 5개의 항목이 모였을 때만 한 번 호출
-    if (tasks.length === 5) {
-      setIsLoading(true);
-      generateSummaryAI(day, tasks)
-        .then((result) => {
-          setSummary(result);
-          // TODO: 이곳에서 실제 일기 저장 로직이 필요하면 추가로 await/then 처리
-        })
-        .catch(console.error)
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
-  }, [day, tasks]);
-
-  return (
-    <div className="p-4">
-      {isLoading ? (
-        <p className="text-center text-gray-600">작성중입니다... 조금만 기다려주세요...🌱</p>
-      ) : summary ? (
-        <div className="whitespace-pre-wrap bg-white p-4 rounded shadow">
-          {summary}
-        </div>
-      ) : (
-        <p className="text-center text-sm text-gray-400">아직 달성된 항목이 5개 모이지 않았어요.</p>
-      )}
-    </div>
-  );
-}
 
   async function generateImageAI(promptBase: string): Promise<string> {
     try {
