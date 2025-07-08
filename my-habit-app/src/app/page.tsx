@@ -453,7 +453,7 @@ The drawing should evoke quiet satisfaction and mindfulness.
 🎯 Focus on: ${promptBase}
 📝 Activities today: ${activities}
 `;
-    const res = await fetch("/api/openai/generate-image", {
+    const res = await fetch("/openai/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
