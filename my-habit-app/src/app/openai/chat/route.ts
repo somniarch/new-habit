@@ -7,6 +7,13 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const runtime = "nodejs";
 
+// GET handler: 안내 메시지 반환
+export async function GET(request: NextRequest) {
+  const msg = "Welcome to Habit Recommendation API. Please use POST with JSON body: { prevTask, nextTask }.";
+  return new Response(msg, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+}
+
+// POST handler: 실제 추천 로직
 export async function POST(request: NextRequest) {
   try {
     const { prevTask, nextTask } = await request.json();
