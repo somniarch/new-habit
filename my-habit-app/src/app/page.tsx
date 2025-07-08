@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 type Routine = {
@@ -221,12 +220,11 @@ export default function Page() {
     }
   }, [todayDiaryLogs, diaryLogsKey, userId]);
 
-  const completionData = fullDays.map((day) => {
     const total = routines.filter((r) => r.day === day).length;
     const done = routines.filter((r) => r.day === day && r.done).length;
     return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
   });
-  const satisfactionData = fullDays.map((day) => {
+  
     const filtered = routines.filter((r) => r.day === day && r.done);
     const avg = filtered.length
       ? Math.round(filtered.reduce((acc, cur) => acc + cur.rating, 0) / filtered.length)
@@ -234,43 +232,54 @@ export default function Page() {
     return { name: day, Satisfaction: avg };
   });
 
-  function downloadCSV(data: Routine[]) {
-    if (data.length === 0) return alert("내보낼 데이터가 없습니다.");
-
-    const diarySummaries: Record<string, string> = {};
-    for (const day of fullDays) {
-      const completedTasks = todayDiaryLogs[day]?.filter((task) =>
-        routines.find((r) => r.day === day && r.task === task && r.done)
-      ) || [];
-      diarySummaries[day] = completedTasks.length >= 5 ? warmSummary(completedTasks).replace(/\n/g, " ") : "";
-    }
-
-    const headers = ["UserID", "Day", "Date", "Task", "Done", "Rating", "IsHabit", "DiarySummary"];
-    const rows = data.map(({ day, task, done, rating, isHabit }) => {
-      const dateStr = formatDiaryDate(day, currentDate, fullDays.indexOf(day));
-      return [
-        userId,
-        day,
-        dateStr,
-        `"${task.replace(/"/g, '""')}"`,
-        done ? "Yes" : "No",
-        rating.toString(),
-        isHabit ? "Yes" : "No",
-        `"${diarySummaries[day] || ""}"`,
-      ];
-    });
-
-    const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "habit_tracking_with_diary.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+// 전체 로그를 CSV로 내보내는 새로운 downloadCSV
+function downloadCSV(data: Routine[]) {
+  if (data.length === 0) {
+    alert("내보낼 데이터가 없습니다.");
+    return;
   }
+
+  // 헤더 정의
+  const headers = [
+    "Date",
+    "Day",
+    "Start",
+    "End",
+    "Task",
+    "Done",
+    "Rating",
+    "IsHabit",
+  ];
+
+  // 모든 routines 항목을 한 줄씩 매핑
+  const rows = data.map(({ date, day, start, end, task, done, rating, isHabit }) => [
+    date, 
+    day,
+    start,
+    end,
+    `"${task.replace(/"/g, '""')}"`,
+    done ? "Yes" : "No",
+    rating.toString(),
+    isHabit ? "Yes" : "No",
+  ]);
+
+  // CSV 문자열 생성
+  const csvContent = [headers, ...rows]
+    .map((row) => row.join(","))
+    .join("\n");
+
+  // 다운로드 처리
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "all_habit_logs.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 
   const addHabitBetween = (idx: number, habit: string) => {
     if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
