@@ -408,20 +408,19 @@ const handleExportCSV = () => {
 }
 
   const handleFetchHabitSuggestions = async (idx: number) => {
-    if (!isLoggedIn) {
-      alert("로그인 후 이용해주세요.");
-      return;
-    }
-    const prevTask = idx > 0 ? routines[idx - 1].task : null;
-    const nextTask = idx < routines.length - 1 ? routines[idx + 1].task : null;
+  if (!isLoggedIn) {
+    alert("로그인 후 이용해주세요.");
+    return;
+  }
+  const prevTask = idx > 0 ? routines[idx - 1].task : null;
+  const nextTask = idx < routines.length - 1 ? routines[idx + 1].task : null;
 
-    const suggestions = await fetchHabitSuggestions(prevTask, nextTask);
+  const suggestions = await fetchHabitSuggestions(prevTask, nextTask);
   setAiHabitSuggestions(suggestions);
   setHabitSuggestionIdx(idx);
+};
 
-  };
-
-  async function generateSummaryAI(_day: string, _tasks: string[]): Promise<string> {
+async function generateSummaryAI(_day: string, _tasks: string[]): Promise<string> {
   try {
     const prompt = `다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:\n${_tasks.join(", ")}\n이 내용을 바탕으로 따뜻하고 긍정적인 응원의 메시지와 함께 짧게 요약해 주세요.`;
     const res = await fetch("/api/openai/chat", {
@@ -443,7 +442,6 @@ const handleExportCSV = () => {
 
 async function generateImageAI(promptBase: string, _tasks: string[]): Promise<string> {
   try {
-    // 주요 행동(primaryTask)과 전체 활동 목록(tasks)을 함께 강조하여 일러스트 요청
     const activities = _tasks.join(", ");
     const prompt = `
 A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art.
@@ -472,66 +470,49 @@ The drawing should evoke quiet satisfaction and mindfulness.
   }
 }
 
-;
-    const res = await fetch("/api/openai/generate-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      console.error("Image AI error:", data);
-      return "";
-    }
-    return data.imageUrl || "";
-  } catch (e) {
-    console.error(e);
-    return "";
-  }
-}
-}
-
 useEffect(() => {
-    (async () => {
-      for (const day of fullDays) {
-        // ──────────────────────────────────────────────────────────────
-        // ① ISO 날짜 문자열 계산
-        // ──────────────────────────────────────────────────────────────
-        const dayIdx = fullDays.indexOf(day);  // 0=월,1=화...
-        const d = new Date(currentDate);
-        // 이번 주 dayIdx 요일로 보정 (getDay: 일=0, 월=1…)
-        d.setDate(
-          currentDate.getDate()
-          - currentDate.getDay()
-          + (dayIdx + 1)
-        );
-        const iso = d.toISOString().split("T")[0];
-  
-        // ② completedTasks 계산 (예: 오늘 완료된 루틴)
-        const completed = routines
-          .filter(r => r.date === iso && r.done)
+  (async () => {
+    for (const day of fullDays) {
+      // ──────────────────────────────────────────────────────────────
+      // ① ISO 날짜 문자열 계산
+      // ──────────────────────────────────────────────────────────────
+      const dayIdx = fullDays.indexOf(day);
+      const d = new Date(currentDate);
+      d.setDate(
+        currentDate.getDate() -
+          currentDate.getDay() +
+          (dayIdx + 1)
+      );
+      const iso = d.toISOString().split("T")[0];
+
+      // ──────────────────────────────────────────────────────────────
+      // ② completedTasks 계산
+      // ──────────────────────────────────────────────────────────────
+      const completed = routines
+        .filter(r => r.date === iso && r.done)
+        .map(r => r.task);
+      const count = completed.length;
+
+      if (count >= 5 && !generated5[day]) {
+        setGenerated5(prev => ({ ...prev, [day]: true }));
+        const summary = await generateSummaryAI(iso, completed);
+        setDiarySummariesAI(prev => ({ ...prev, [iso]: summary }));
+        const doneEntries = routines.filter(r => r.day === day && r.done);
+        const maxRating = Math.max(...doneEntries.map(r => r.rating));
+        const topTasks = doneEntries
+          .filter(r => r.rating === maxRating)
           .map(r => r.task);
-        const count = completed.length;
-
-        if (count >= 5 && !generated5[day]) {
-          setGenerated5(prev => ({ ...prev, [day]: true }));
-          const summary = await generateSummaryAI(iso, completed);
-          setDiarySummariesAI(prev=>({ ...prev, [iso]: summary }));
-          const doneEntries = routines.filter(r => r.day === day && r.done);
-          const maxRating = Math.max(...doneEntries.map(r => r.rating));
-          const topTasks = doneEntries.filter(r => r.rating === maxRating).map(r => r.task);
-          const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-          const imageUrl = await generateImageAI(promptBase, completed);
-          setDiaryImagesAI(prev => ({ ...prev, [iso]: imageUrl }));
-        } else if (count >= 10 && !generated10[day]) {
-          setGenerated10(prev => ({ ...prev, [day]: true }));
-          const summary = await generateSummaryAI(day, completed);
-          setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
-
-        }
+        const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
+        const imageUrl = await generateImageAI(promptBase, completed);
+        setDiaryImagesAI(prev => ({ ...prev, [iso]: imageUrl }));
+      } else if (count >= 10 && !generated10[day]) {
+        setGenerated10(prev => ({ ...prev, [day]: true }));
+        const summary = await generateSummaryAI(day, completed);
+        setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
       }
-    })();
-  }, [routines, todayDiaryLogs, generated5, generated10]);
+    }
+  })();
+}, [routines, todayDiaryLogs, generated5, generated10]);
 
 
 
