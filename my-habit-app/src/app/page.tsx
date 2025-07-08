@@ -367,11 +367,17 @@ export default function Page() {
       throw new Error("추천 결과 포맷이 올바르지 않습니다.");
     }
 
-    // "1) 2분 심호흡🌬️" → "2분 심호흡🌬️" 처럼
-    return data.result.map((item: string) =>
-      // 숫자+') ' 제거
-      item.replace(/^\s*\d+\)\s*/, "")
-    );
+    // 번호 제거 및 개수 제한
+    let suggestions = data.result
+      .map((item: string) => item.replace(/^\s*\d+\)\s*/, ""))
+      .slice(0, 5);      // 최대 5개
+    // 최소 3개가 되도록 기본 후보로 채워넣기
+    if (suggestions.length < 3) {
+      const fill = habitCandidates.filter(h => !suggestions.includes(h));
+      suggestions = suggestions.concat(fill.slice(0, 3 - suggestions.length));
+    }
+    return suggestions;
+
 
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "추천 중 오류 발생";
