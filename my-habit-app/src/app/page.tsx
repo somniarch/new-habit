@@ -472,14 +472,28 @@ Content: ${promptBase}
 useEffect(() => {
     (async () => {
       for (const day of fullDays) {
-        const completed = todayDiaryLogs[day]?.filter(task =>
-          routines.some(r => r.day === day && r.task === task && r.done)
-        ) || [];
+        // ──────────────────────────────────────────────────────────────
+        // ① ISO 날짜 문자열 계산
+        // ──────────────────────────────────────────────────────────────
+        const dayIdx = fullDays.indexOf(day);  // 0=월,1=화...
+        const d = new Date(currentDate);
+        // 이번 주 dayIdx 요일로 보정 (getDay: 일=0, 월=1…)
+        d.setDate(
+          currentDate.getDate()
+          - currentDate.getDay()
+          + (dayIdx + 1)
+        );
+        const iso = d.toISOString().split("T")[0];
+  
+        // ② completedTasks 계산 (예: 오늘 완료된 루틴)
+        const completed = routines
+          .filter(r => r.date === iso && r.done)
+          .map(r => r.task);
         const count = completed.length;
 
         if (count >= 5 && !generated5[day]) {
           setGenerated5(prev => ({ ...prev, [day]: true }));
-          const summary = await generateSummaryAI(day, completed);
+          const summary = await generateSummaryAI(iso, completed);
           setDiarySummariesAI(prev=>({ ...prev, [iso]: summary }));
           const doneEntries = routines.filter(r => r.day === day && r.done);
           const maxRating = Math.max(...doneEntries.map(r => r.rating));
@@ -487,7 +501,6 @@ useEffect(() => {
           const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
           const imageUrl = await generateImageAI(promptBase);
           setDiaryImagesAI(prev=>({ ...prev, [iso]: imageUrl }));
-        }
         else if (count >= 10 && !generated10[day]) {
           setGenerated10(prev => ({ ...prev, [day]: true }));
           const summary = await generateSummaryAI(day, completed);
