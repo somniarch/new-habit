@@ -542,7 +542,7 @@ useEffect(() => {
     generateDiaryAI();
   }
 }, [selectedTab, todayDiaryLogs, routines, generateDiaryAI]);
-
+}
         return (
       <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
         {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
