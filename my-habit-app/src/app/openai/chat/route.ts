@@ -180,54 +180,47 @@ ${prompt}
     });
 
     const text = completion.choices[0]?.message?.content?.trim() ?? "";
-    console.log("[API] OpenAI raw response:", text);
+    console.log("[Habit API] OpenAI raw response:", text);
 
-    const suggestions = text
+    // 1) 번호·불릿 제거, 'N분 활동' 패턴만 남기기
+    let suggestions = text
       .split(/\r?\n+/)
-      .map(line => line.replace(/^[-*]\s*/, "").trim())
-      .filter(line => line)
+      .map(line =>
+        line
+          .replace(/^\s*\d+[\.\)]\s*/, "")   // "1. " 또는 "2) " 제거
+          .replace(/^[-*]\s*/, "")          // 불릿 제거
+          .trim()
+       )
       .filter(line => /^\d+분\s[가-힣]+.*$/u.test(line));
 
-    console.log("[Habit API] Cleaned suggestions:", suggestions);
-    // 이모지가 없는 경우 키워드 기반 디폴트 이모지 붙이기
+    // 2) 결과가 없으면 기본 후보로 대체 (최소 3개)
+    if (suggestions.length === 0) {
+      suggestions = ["3분 스트레칭", "2분 숨쉬기", "1분 정리"];
+    }
+
+    // 3) 이모지가 없는 항목엔 키워드 기반 디폴트 이모지 붙이기
     const emojiMap: Record<string, string> = {
-      '걷': '🚶‍♀️',
-      '숨': '🌬️',
+      '걷기': '🚶‍♀️',
+      '숨쉬기': '🌬️',
       '명상': '🧘‍♂️',
       '스트레칭': '🤸‍♀️',
-      '물': '💧',
+      '물 마시기': '💧',
+      '음악 감상': '🎶',
       'default': '✨'
     };
     const finalSuggestions = suggestions.map(item => {
-      // 이미 이모지가 있으면 그대로
       if (/\p{Emoji}/u.test(item)) return item;
-      // 키워드 매핑
       for (const [key, emoji] of Object.entries(emojiMap)) {
         if (key !== 'default' && item.includes(key)) {
           return `${item}${emoji}`;
         }
       }
-      // 매핑 없으면 기본 이모지
       return `${item}${emojiMap.default}`;
     });
-    console.log("[Habit API] Final suggestions with default emoji:", finalSuggestions);
 
-    console.log("[API] Filtered suggestions:", suggestions);
+    console.log("[Habit API] Final suggestions:", finalSuggestions);
 
-    if (suggestions.length === 0) {
-      return new NextResponse(
-        JSON.stringify({
-          error: "No suggestions generated",
-          rawResponse: text,
-          debug: "OpenAI response did not match expected format"
-        }),
-        {
-          status: 502,
-          headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
-        }
-      );
-    }
-
+    // JSON 형태로 반환
     return new NextResponse(
       JSON.stringify({ result: finalSuggestions }),
       {
@@ -238,7 +231,6 @@ ${prompt}
         }
       }
     );
-
   } catch (error: unknown) {
     console.error("[API] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
