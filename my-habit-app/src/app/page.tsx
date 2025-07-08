@@ -339,29 +339,49 @@ export default function Page() {
   };
 
     async function fetchHabitSuggestions(
-    prevTask: string | null,
-    nextTask: string | null
-  ): Promise<string[]> {
-    setAiHabitLoading(true);
-    setAiHabitError(null);
-    try {
-      const res = await fetch("/app/openai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prevTask, nextTask }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "추천 실패");
-      return data.suggestions as string[];
-    } catch (error: unknown) {
-      setAiHabitError(
-        error instanceof Error ? error.message : "추천 중 오류 발생"
-     );
-      return habitCandidates.slice(0, 3);
-    } finally {
-      setAiHabitLoading(false);
+  prevTask: string | null,
+  nextTask: string | null
+): Promise<string[]> {
+  setAiHabitLoading(true);
+  setAiHabitError(null);
+
+  try {
+    const res = await fetch("/app/openai/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prevTask, nextTask }),
+    });
+
+    // 먼저 HTTP 상태 체크
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || `Error ${res.status}`);
     }
+
+    // 순수 텍스트로 받기
+    const raw = await res.text();
+    console.log("[fetchHabitSuggestions] raw response:", raw);
+
+    // 빈 응답 방어
+    if (!raw.trim()) {
+      throw new Error("추천 결과가 없습니다.");
+    }
+
+    // 줄바꿈 단위로 분할 + 공백 줄 제거
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line);
+
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "추천 중 오류 발생";
+    setAiHabitError(msg);
+    // fallback
+    return habitCandidates.slice(0, 3);
+  } finally {
+    setAiHabitLoading(false);
   }
+}
 
   const handleFetchHabitSuggestions = async (idx: number) => {
     if (!isLoggedIn) {
