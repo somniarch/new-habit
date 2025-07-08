@@ -585,8 +585,9 @@ useEffect(() => {
                 로그인
               </button>
             </div>
-           }
-          {loginError && <p className="text-red-600">{loginError}</p>}
+            {loginError && <p className="text-red-600">{loginError}</p>}
+          </div>
+        ) : (
 
           {adminModeActive && (
             <div className="mt-4 border rounded p-4 bg-gray-50">
