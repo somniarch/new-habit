@@ -224,21 +224,21 @@ export default function Page() {
       const total = routines.filter(r => r.day === day).length;
       const done  = routines.filter(r => r.day === day && r.done).length;
       return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
-    });
+}); 
   
     const filtered = routines.filter((r) => r.day === day && r.done);
     const avg = filtered.length
       ? Math.round(filtered.reduce((acc, cur) => acc + cur.rating, 0) / filtered.length)
       : 0;
     return { name: day, Satisfaction: avg };
-  });
+});
 
 // 전체 로그를 CSV로 내보내는 새로운 downloadCSV
 function downloadCSV(data: Routine[]) {
   if (data.length === 0) {
     alert("내보낼 데이터가 없습니다.");
     return;
-  }
+}
 
   // 헤더 정의
   const headers = [
