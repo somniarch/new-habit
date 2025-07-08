@@ -1,5 +1,4 @@
 'use client';
-import React, { useState, useEffect } from "react";
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -95,38 +94,26 @@ function formatMonthDay(date: Date, dayIndex: number) {
   return `${mm}/${dd}`;
 }
 
-export default function Page() {
-  const [userId, setUserId] = useState("");
-  const [userPw, setUserPw] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+ export default function Page() {
+   const { data: session, status } = useSession();
+   const isLoggedIn = status === "authenticated";
+   // (Admin 여부는 session.user.role 에서 확인)
   const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
   const [loginError, setLoginError] = useState("");
-  const [adminModeActive, setAdminModeActive] = useState(false);
-
-  const adminId = "3333";
-  const adminPw = "8888";
-  const storedUsersKey = "registeredUsers";
-  const routinesKey = `routines_${userId}`;
-  const diaryLogsKey = `todayDiaryLogs_${userId}`;
+   // — 관리자 모드 로직은 서버단 Admin API + 미들웨어로 대체
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [weekNum, setWeekNum] = useState(1);
   const [selectedDay, setSelectedDay] = useState(fullDays[0]);
   const [selectedTab, setSelectedTab] = useState<"routine-habit" | "tracker" | "today-diary">("routine-habit");
 
-  const [routines, setRoutines] = useState<Routine[]>(() => {
-    if (typeof window === "undefined" || !userId) return [];
-    const saved = localStorage.getItem(routinesKey);
-    return saved ? JSON.parse(saved) : [];
-  });
+
   const [newRoutine, setNewRoutine] = useState({ start: "08:00", end: "09:00", task: "" });
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
-  const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>(() => {
-    if (typeof window === "undefined" || !userId) return {};
-    const saved = localStorage.getItem(diaryLogsKey);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const fetcher = (url) => fetch(url).then(r => r.json());
+  const { data: routines, mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
+  const { data: diaries } = useSWR<any[]>("/api/diaries", fetcher);
+   // 로딩 상태: status === "loading" || routines===undefined
 
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
@@ -151,28 +138,6 @@ export default function Page() {
     if (typeof window === "undefined") return;
     localStorage.setItem(storedUsersKey, JSON.stringify(users));
   };
-
-  const [newUserId, setNewUserId] = useState("");
-  const [newUserPw, setNewUserPw] = useState("");
-  const [userAddError, setUserAddError] = useState("");
-
-  const handleLogin = () => {
-    if (!userId.trim() || !userPw.trim()) {
-      setLoginError("아이디와 비밀번호를 모두 입력해주세요.");
-      return;
-    }
-    if (adminModeActive) {
-      if (userId === adminId && userPw === adminPw) {
-        setIsLoggedIn(true);
-        setIsAdmin(true);
-        setLoginError("");
-        setToast({ emoji: "✅", message: "관리자 로그인 성공!" });
-      } else {
-        setLoginError("관리자 계정이 아닙니다.");
-        setToast({ emoji: "⚠️", message: "관리자 로그인 실패" });
-      }
-      return;
-    }
     const users = getRegisteredUsers();
     const found = users.find((u) => u.id === userId && u.pw === userPw);
     if (found) {
@@ -185,21 +150,36 @@ export default function Page() {
       setToast({ emoji: "⚠️", message: "로그인 실패" });
     }
   };
+   const [email, setEmail] = useState("");
+   const [password, setPassword] = useState("");
+   const [signUpMode, setSignUpMode] = useState(false);
+   const [authError, setAuthError] = useState("");
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserId("");
-    setUserPw("");
-    setIsAdmin(false);
-    setAdminModeActive(false);
-    setToast({ emoji: "👋", message: "로그아웃 되었습니다." });
-  };
+   const handleLogin = async () => {
+     setAuthError("");
+     const res = await signIn("credentials", {
+       redirect: false,
+       email,
+       password,
+     });
+     if (res?.error) setAuthError(res.error);
+   };
 
-  const handleAddUser = () => {
-    if (!newUserId.trim() || !newUserPw.trim()) {
-      setUserAddError("아이디와 비밀번호를 모두 입력해주세요.");
-      return;
-    }
+   const handleSignUp = async () => {
+     setAuthError("");
+     const res = await fetch("/api/auth/signup", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ email, password }),
+     });
+     const data = await res.json();
+     if (!res.ok) return setAuthError(data.error || "회원가입 실패");
+     // 가입 성공 시 바로 로그인
+     await handleLogin();
+   };
+
+   const handleLogout = () => signOut({ redirect: false });
+
     const users = getRegisteredUsers();
     if (users.find((u) => u.id === newUserId)) {
       setUserAddError("이미 존재하는 아이디입니다.");
@@ -212,18 +192,6 @@ export default function Page() {
     setNewUserPw("");
     setToast({ emoji: "✅", message: `사용자 ${newUserId} 등록 완료!` });
   };
-
-  useEffect(() => {
-    if (userId) {
-      localStorage.setItem(routinesKey, JSON.stringify(routines));
-    }
-  }, [routines, routinesKey, userId]);
-  useEffect(() => {
-    if (userId) {
-      localStorage.setItem(diaryLogsKey, JSON.stringify(todayDiaryLogs));
-    }
-  }, [todayDiaryLogs, diaryLogsKey, userId]);
-
   
 
 
@@ -524,44 +492,35 @@ return (
     <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
       {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
 
-      {!isLoggedIn ? (
-        <div className="max-w-sm mx-auto p-6 mt-20 border rounded shadow space-y-4 font-sans">
-          <h2 className="text-xl font-semibold text-center">로그인 해주세요</h2>
+          {!isLoggedIn ? (
+        <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
+          <div className="text-right">
+            <button onClick={() => setSignUpMode(!signUpMode)} className="text-sm underline">
+              {signUpMode ? "로그인 모드로 전환" : "회원가입 모드로 전환"}
+            </button>
+          </div>
           <input
-            type="text"
-            placeholder="아이디"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
+            type="email"
+            placeholder="이메일"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             className="border rounded px-3 py-2 w-full"
           />
           <input
             type="password"
             placeholder="비밀번호"
-            value={userPw}
-            onChange={(e) => setUserPw(e.target.value)}
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             className="border rounded px-3 py-2 w-full"
           />
-
-          <div className="flex justify-between items-center mt-1">
-            <button
-              onClick={() => {
-                setAdminModeActive(!adminModeActive);
-                setLoginError("");
-                setUserId("");
-                setUserPw("");
-                setUserAddError("");
-              }}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {adminModeActive ? "일반 로그인 모드로 전환" : "관리자 모드"}
-            </button>
-            <button
-              onClick={handleLogin}
-              className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition"
-            >
-              로그인
-            </button>
-          </div>
+          {authError && <p className="text-red-600">{authError}</p>}
+          <button
+            onClick={signUpMode ? handleSignUp : handleLogin}
+            className="bg-blue-600 text-white px-6 py-2 rounded font-semibold"
+          >
+            {signUpMode ? "회원가입" : "로그인"}
+          </button>
+        </div>
 
           {loginError && <p className="text-red-600">{loginError}</p>}
 
@@ -594,12 +553,12 @@ return (
         </div>
       ) : (
         <>
-          <div className="flex justify-end gap-2">
-            <span className="text-sm text-gray-600">안녕하세요, {userId}님</span>
-            <button
-              onClick={handleLogout}
-              className="text-red-600 underline text-sm hover:text-red-800 transition"
-            >
+        <div className="flex justify-end gap-2">
+          <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
+          <button onClick={handleLogout} className="text-red-600 underline text-sm">
+           로그아웃
+          </button>
+        </div>
               로그아웃
             </button>
           </div>
@@ -697,9 +656,9 @@ return (
               </div>
 
               <div className="mt-6 space-y-4">
-                {routines
-                  .filter((r) => r.day === selectedDay)
-                    .map((routine, idx, arr) => {
+            {routines
+              .filter((r) => r.day === selectedDay)
+              .map((routine, idx) => {
                     // 전체 routines 배열에서 이 routine의 실제 인덱스
                     const globalIdx = routines.indexOf(routine);
                     // 중괄호 블록 안에서는 JSX를 return 해줘야 합니다
