@@ -480,13 +480,13 @@ useEffect(() => {
         if (count >= 5 && !generated5[day]) {
           setGenerated5(prev => ({ ...prev, [day]: true }));
           const summary = await generateSummaryAI(day, completed);
-          setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
+          setDiarySummariesAI(prev=>({ ...prev, [iso]: summary }));
           const doneEntries = routines.filter(r => r.day === day && r.done);
           const maxRating = Math.max(...doneEntries.map(r => r.rating));
           const topTasks = doneEntries.filter(r => r.rating === maxRating).map(r => r.task);
           const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
           const imageUrl = await generateImageAI(promptBase);
-          setDiaryImagesAI(prev => ({ ...prev, [day]: imageUrl }));
+          setDiaryImagesAI(prev=>({ ...prev, [iso]: imageUrl }));
         }
         else if (count >= 10 && !generated10[day]) {
           setGenerated10(prev => ({ ...prev, [day]: true }));
@@ -812,7 +812,7 @@ return (
                  const idx = fullDays.indexOf(selectedDay);
                  const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
                  const summary = diarySummariesAI[iso] || warmSummary(completedTasks);
-                 const imageUrl = diaryImagesAI[selectedDay];
+                 const imageUrl = diaryImagesAI[iso];
                  return (
                    <div key={selectedDay} className="mb-6">
                      <h3 className="font-semibold">{diaryDateStr}</h3>
