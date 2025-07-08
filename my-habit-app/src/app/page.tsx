@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image"; 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -128,7 +128,6 @@ export default function Page() {
 
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
-  const [loadingAI, setLoadingAI] = useState<Record<string, boolean>>({});
   const [generated5, setGenerated5] = useState<Record<string, boolean>>({});
   const [generated10, setGenerated10] = useState<Record<string, boolean>>({});
 
@@ -515,7 +514,7 @@ useEffect(() => {
         }
       }
     })();
-  }, [routines, todayDiaryLogs]);
+  }, [routines, todayDiaryLogs, generated5, generated10]);
 
 
 
