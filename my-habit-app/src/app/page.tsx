@@ -68,7 +68,7 @@ function formatWeekLabel(date: Date, weekNum: number) {
   const yy = String(date.getFullYear()).slice(2);
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
-  return ${yy}.${mm}.${dd}.W${weekNum};
+  return `${yy}.${mm}.${dd}.W${weekNum}`;
 }
 
 function formatDiaryDate(day: string, baseDate: Date, dayIndex: number) {
@@ -77,13 +77,13 @@ function formatDiaryDate(day: string, baseDate: Date, dayIndex: number) {
   const yy = String(firstDayOfWeek.getFullYear()).slice(2);
   const mm = String(firstDayOfWeek.getMonth() + 1).padStart(2, "0");
   const dd = String(firstDayOfWeek.getDate()).padStart(2, "0");
-  return ${yy}.${mm}.${dd}(${day});
+  return `${yy}.${mm}.${dd}(${day})`;
 }
 
 function warmSummary(entries: string[]) {
   if (entries.length < 5) return "";
   const firstFive = entries.slice(0, 5);
-  return 오늘 당신은 ${firstFive.join(", ")} 등 다양한 일과를 멋지게 해냈어요.\n작은 습관 하나하나가 큰 변화를 만들어가고 있답니다.\n이 페이스를 유지하며 행복한 하루하루 보내길 응원할게요!;
+  return `오늘 당신은 ${firstFive.join(", ")} 등 다양한 일과를 멋지게 해냈어요.\n작은 습관 하나하나가 큰 변화를 만들어가고 있답니다.\n이 페이스를 유지하며 행복한 하루하루 보내길 응원할게요!`;
 }
 
 function formatMonthDay(date: Date, dayIndex: number) {
@@ -91,7 +91,7 @@ function formatMonthDay(date: Date, dayIndex: number) {
   firstDayOfWeek.setDate(date.getDate() - date.getDay() + dayIndex + 1);
   const mm = String(firstDayOfWeek.getMonth() + 1).padStart(2, "0");
   const dd = String(firstDayOfWeek.getDate()).padStart(2, "0");
-  return ${mm}/${dd};
+  return `${mm}/${dd}`;
 }
 
  export default function Page() {
@@ -233,7 +233,7 @@ const handleExportCSV = () => {
     r.day,
     r.start,
     r.end,
-    "${r.task.replace(/"/g,'""')}",
+    `"${r.task.replace(/"/g,'""')}"`,
     r.done ? "Yes" : "No",
     String(r.rating),
     r.isHabit ? "Yes" : "No"
@@ -243,7 +243,7 @@ const handleExportCSV = () => {
     .map(r => r.join(","))
     .join("\n");
 
-  const blob = new Blob([\ufeff${csv}], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "all_habit_logs.csv";
@@ -347,7 +347,7 @@ const handleExportCSV = () => {
     // 먼저 HTTP 상태 체크
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(errText || Error ${res.status});
+      throw new Error(errText || `Error ${res.status}`);
     }
 
     // 순수 텍스트로 받기
@@ -396,7 +396,7 @@ const handleExportCSV = () => {
 
 async function generateSummaryAI(_day: string, _tasks: string[]): Promise<string> {
   try {
-    const prompt = 다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:\n${_tasks.join(", ")}\n이 내용을 바탕으로 따뜻하고 긍정적인 응원의 메시지와 함께 짧게 요약해 주세요.;
+    const prompt = `다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:\n${_tasks.join(", ")}\n이 내용을 바탕으로 따뜻하고 긍정적인 응원의 메시지와 함께 짧게 요약해 주세요.`;
     const res = await fetch("/api/openai/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -476,7 +476,7 @@ useEffect(() => {
         const topTasks = doneEntries
           .filter(r => r.rating === maxRating)
           .map(r => r.task);
-        const promptBase = 오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")};
+        const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
         const imageUrl = await generateImageAI(promptBase, completed);
         setDiaryImagesAI(prev => ({ ...prev, [iso]: imageUrl }));
       } else if (count >= 10 && !generated10[day]) {
