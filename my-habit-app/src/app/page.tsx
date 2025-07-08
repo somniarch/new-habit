@@ -129,6 +129,8 @@ export default function Page() {
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
   const [loadingAI, setLoadingAI] = useState<Record<string, boolean>>({});
+  const [generated5, setGenerated5] = useState<Record<string, boolean>>({});
+  const [generated10, setGenerated10] = useState<Record<string, boolean>>({});
 
   const [aiHabitSuggestions, setAiHabitSuggestions] = useState<string[]>([]);
   const [aiHabitLoading, setAiHabitLoading] = useState(false);
@@ -459,6 +461,7 @@ export default function Page() {
   }
 
   async function generateImageAI(promptBase: string): Promise<string> {
+
     try {
   const prompt = `
 A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art.
@@ -486,62 +489,36 @@ Content: ${promptBase}
     }
   }
 
- const generateDiaryAI = useCallback(async () => {
-  for (const day of fullDays) {
-    const completedTasks = todayDiaryLogs[day]?.filter((task) =>
-      routines.find((r) => r.day === day && r.task === task && r.done)
-    ) || [];
-    if (completedTasks.length < 5) continue;
-
-    // **최고 만족도 행동** 모아서 요약 생성
-    const doneEntries = routines.filter(r => r.day === day && r.done);
-    const maxRating = Math.max(...doneEntries.map(r => r.rating));
-    const topTasks = doneEntries
-      .filter(r => r.rating === maxRating)
-      .map(r => r.task);
-
-    if (doneEntries.length < 5) continue;
-
-    if (!loadingAI[day] && topTasks.length > 0) {
-      const summary = await generateSummaryAI(day, completedTasks);
-      setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
-    }
-  }
-}, [todayDiaryLogs, routines, loadingAI]);
-
-
 useEffect(() => {
-  (async () => {
-    for (const day of fullDays) {
-      if (diarySummariesAI[day] && !diaryImagesAI[day] && !loadingAI[day]) {
-        setLoadingAI(prev => ({ ...prev, [day]: true }));
+    (async () => {
+      for (const day of fullDays) {
+        const completed = todayDiaryLogs[day]?.filter(task =>
+          routines.some(r => r.day === day && r.task === task && r.done)
+        ) || [];
+        const count = completed.length;
 
-        // ★ topTasks 계산
-        const doneEntries = routines.filter(r => r.day === day && r.done);
-        const maxRating = doneEntries.length
-          ? Math.max(...doneEntries.map(r => r.rating))
-          : 0;
-        const topTasks = doneEntries
-          .filter(r => r.rating === maxRating)
-          .map(r => r.task);
-        const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-
-        const generated = await generateImageAI(promptBase);
-        if (generated) {
-          setDiaryImagesAI(prev => ({ ...prev, [day]: generated }));
+        if (count >= 5 && !generated5[day]) {
+          setGenerated5(prev => ({ ...prev, [day]: true }));
+          const summary = await generateSummaryAI(day, completed);
+          setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
+          const doneEntries = routines.filter(r => r.day === day && r.done);
+          const maxRating = Math.max(...doneEntries.map(r => r.rating));
+          const topTasks = doneEntries.filter(r => r.rating === maxRating).map(r => r.task);
+          const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
+          const imageUrl = await generateImageAI(promptBase);
+          setDiaryImagesAI(prev => ({ ...prev, [day]: imageUrl }));
         }
-        setLoadingAI(prev => ({ ...prev, [day]: false }));
+        else if (count >= 10 && !generated10[day]) {
+          setGenerated10(prev => ({ ...prev, [day]: true }));
+          const summary = await generateSummaryAI(day, completed);
+          setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
+        }
       }
-    }
-  })();
-}, [diarySummariesAI, diaryImagesAI, loadingAI, routines]);
+    })();
+  }, [routines, todayDiaryLogs]);
 
 
-useEffect(() => {
-  if (selectedTab === "today-diary") {
-    generateDiaryAI();
-  }
-}, [selectedTab, todayDiaryLogs, routines, generateDiaryAI]);
+
 
 return (
     <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
