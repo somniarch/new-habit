@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import useSWR from "swr";
 
 type Routine = {
   date: string; 
