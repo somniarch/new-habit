@@ -441,10 +441,10 @@ const handleExportCSV = () => {
   }
 }
 
-async function generateImageAI(promptBase: string, tasks: string[]): Promise<string> {
+async function generateImageAI(promptBase: string, _tasks: string[]): Promise<string> {
   try {
     // 주요 행동(primaryTask)과 전체 활동 목록(tasks)을 함께 강조하여 일러스트 요청
-    const activities = tasks.join(", ");
+    const activities = _tasks.join(", ");
     const prompt = `
 A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art.
 Gentle, muted colors like orange, yellow, brown, and green.
@@ -471,6 +471,7 @@ The drawing should evoke quiet satisfaction and mindfulness.
     return "";
   }
 }
+
 `;
     const res = await fetch("/api/openai/generate-image", {
       method: "POST",
