@@ -91,7 +91,12 @@ ${prompt}
         max_tokens: 200
       });
 
-      const summary = completion.choices[0]?.message?.content?.trim() ?? "";
+      // 원본 AI 응답
+      const raw = completion.choices[0]?.message?.content ?? "";
+      // "**오늘의 일기**" 헤더와 뒤따르는 줄바꿈 제거
+      const withoutHeader = raw.replace(/^\*\*오늘의 일기\*\*\s*\r?\n?/i, "");
+      // 앞뒤 공백 정리
+      const summary = withoutHeader.trim();
       console.log("[API] Diary summary response:", summary);
 
       return new NextResponse(
