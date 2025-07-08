@@ -2,21 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image"; 
-import dynamic from "next/dynamic";
 import WeeklySummary from "@/components/ui/WeeklySummary";
-
- const ResponsiveContainer = dynamic(
-   () => import("recharts").then((mod) => mod.ResponsiveContainer),
-   { ssr: false }
- );
- const BarChart = dynamic(
-   () => import("recharts").then((mod) => mod.BarChart),
-   { ssr: false }
- );
- const Bar = dynamic(() => import("recharts").then((mod) => mod.Bar), { ssr: false });
- const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), { ssr: false });
- const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis), { ssr: false });
- const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
 
 
 type Routine = {
@@ -240,12 +226,7 @@ export default function Page() {
   // ── 주간 완료율 데이터
 
   
-  // 전체 로그를 CSV로 내보내는 새로운 downloadCSV
-  function downloadCSV(data: Routine[]) {
-    if (data.length === 0) {
-      alert("내보낼 데이터가 없습니다.");
-      return;
-    }
+
 
   // 헤더 정의
   const headers = [
@@ -804,17 +785,6 @@ return (
               </div>
             </div>
           )}
-
-     {selectedTab === "tracker" && (
-       <div className="mt-6">
-         <h2 className="text-center font-semibold text-xl mb-4">주간 통계</h2>
-         <WeeklySummary
-           routines={routines}
-           currentDate={currentDate.toISOString().split("T")[0]}
-         />
-       </div>
-     )}
-
 
           {selectedTab === "today-diary" && (
             <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
