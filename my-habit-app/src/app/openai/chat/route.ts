@@ -1,135 +1,112 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+/ new-habit/my-habit-app/src/app/openai/chat/route.ts
+
+import { NextRequest } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export const runtime = "nodejs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-}
+  "Access-Control-Allow-Headers": "Content-Type"
+};
 
+// OPTIONS handler: CORS preflight
 export async function OPTIONS() {
-  return new NextResponse(null, {
+  return new Response(null, {
     status: 204,
-    headers: corsHeaders,
-  })
+    headers: corsHeaders
+  });
 }
 
+// GET handler: 안내 메시지 반환
 export async function GET() {
-  const msg = "Welcome to Habit Recommendation API. Please use POST with JSON body: { prevTask, nextTask }."
-  return new NextResponse(msg, {
+  const msg = "Welcome to Habit Recommendation API. Please use POST with JSON body: { prevTask, nextTask }.";
+  return new Response(msg, {
     status: 200,
     headers: {
       ...corsHeaders,
-      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Type": "text/plain; charset=utf-8"
     },
-  })
+  });
 }
 
+// POST handler: 실제 추천 로직
 export async function POST(request: NextRequest) {
   try {
-    // Validate API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error("[Habit API] Missing OPENAI_API_KEY")
-      return NextResponse.json({ error: "API configuration error" }, { status: 500, headers: corsHeaders })
-    }
-
-    // Parse request body
-    let body
-    try {
-      body = await request.json()
-    } catch (parseError) {
-      console.error("[Habit API] JSON parse error:", parseError)
-      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400, headers: corsHeaders })
-    }
-
-    const { prevTask, nextTask } = body
-
+    const { prevTask, nextTask } = await request.json();
     if (!prevTask && !nextTask) {
-      return NextResponse.json(
-        { error: "No context provided (prevTask or nextTask required)" },
-        { status: 400, headers: corsHeaders },
-      )
+      return new Response(
+        JSON.stringify({ error: "No context provided (prevTask or nextTask required)" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
     }
 
-    // Create context
-    const context = [prevTask, nextTask].filter(Boolean).join(", ")
-    const prompt = `사용자의 이전 행동과 다음 행동: ${context}\n
+    // 조합된 컨텍스트 생성
+    const context = [prevTask, nextTask].filter(Boolean).join(", ");
+    const prompt = `사용자의 이전 행동과 다음 행동: ${context}
 이 행동들 사이에 자연스럽게 연결할 수 있는 짧은 웰빙 습관을
 1) 형식: N분(1~5분) + 활동 + 이모지
 2) 공백 포함 12자 이내
 3) 3개 이상 5개 이하
 4) 리스트 기호, 설명 등 불필요한 요소 없음
 5) 활동은 모두 한국어 명사형으로만 작성
+예시: 3분 스트레칭💪`;
 
-예시: 3분 스트레칭💪`
-
-    console.log("[Habit API] Making request to OpenAI with context:", context)
-
-    // Use AI SDK for better error handling
-    const { text } = await generateText({
-      model: openai("gpt-4o-mini"),
-      system: "당신은 웰빙 습관 추천 전문가입니다.",
-      prompt: prompt,
+    // OpenAI 호출
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "당신은 웰빙 습관 추천 전문가입니다." },
+        { role: "user", content: prompt },
+      ],
       temperature: 0.7,
-      maxTokens: 200,
-    })
+      max_tokens: 200,
+    });
 
-    console.log("[Habit API] OpenAI response:", text)
+    // 응답 텍스트 추출
+    const text = completion.choices[0]?.message?.content?.trim() ?? "";
+    console.log("[Habit API] OpenAI raw response:", text);
 
-    // Process response
+    // 줄 단위 분할 및 필터링
     const suggestions = text
       .split(/\r?\n+/)
-      .map((line) => line.replace(/^[-*•]\s*/, "").trim())
-      .filter(Boolean)
-      .filter((line) => /^\d+분\s[가-힣].+/u.test(line))
-      .slice(0, 5) // Limit to max 5 suggestions
+      .map(line => line.replace(/^[-*]\s*/, "").trim())
+      .filter(line => line)
+      .filter(line => /\d+분\s[가-힣]+기?\p{Emoji}/u.test(line));
 
     if (suggestions.length === 0) {
-      console.warn("[Habit API] No valid suggestions generated from response:", text)
-      return NextResponse.json(
+      return new Response(
+        JSON.stringify({ error: "No suggestions generated" }),
         {
-          error: "No valid suggestions generated",
-          debug: process.env.NODE_ENV === "development" ? text : undefined,
-        },
-        { status: 502, headers: corsHeaders },
-      )
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
     }
 
-    return NextResponse.json({ result: suggestions }, { status: 200, headers: corsHeaders })
+    // JSON 형태로 반환
+    return new Response(
+      JSON.stringify({ result: suggestions }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
+      }
+    );
   } catch (error: unknown) {
-    console.error("[Habit API] Error occurred:", error)
-
-    // Handle different types of errors
-    if (error instanceof Error) {
-      const errorMessage = error.message.toLowerCase()
-
-      // API key issues
-      if (errorMessage.includes("api key") || errorMessage.includes("unauthorized")) {
-        return NextResponse.json({ error: "Invalid or missing API key" }, { status: 401, headers: corsHeaders })
+    console.error("[Habit API] Error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({ error: message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
       }
-
-      // Rate limiting
-      if (errorMessage.includes("rate limit") || errorMessage.includes("quota")) {
-        return NextResponse.json(
-          { error: "Rate limit exceeded. Please try again later." },
-          { status: 429, headers: corsHeaders },
-        )
-      }
-
-      // Network/timeout issues
-      if (errorMessage.includes("timeout") || errorMessage.includes("network")) {
-        return NextResponse.json({ error: "Network timeout. Please try again." }, { status: 504, headers: corsHeaders })
-      }
-
-      // Model/service issues
-      if (errorMessage.includes("model") || errorMessage.includes("service")) {
-        return NextResponse.json({ error: "AI service temporarily unavailable" }, { status: 503, headers: corsHeaders })
-      }
-
-      return NextResponse.json({ error: `Request failed: ${error.message}` }, { status: 500, headers: corsHeaders })
-    }
-
-    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500, headers: corsHeaders })
+    );
   }
 }
