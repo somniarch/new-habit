@@ -741,7 +741,7 @@ return (
                                     <button
                                       key={i}
                                       onClick={() => {
-                                        addHabitBetween(idx, habit);
+                                        addHabitBetween(globalIdx, habit);
                                         setHabitSuggestionIdx(null);
                                         setAiHabitSuggestions([]);
                                         setAiHabitError(null);
