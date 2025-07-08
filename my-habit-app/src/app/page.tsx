@@ -543,49 +543,49 @@ useEffect(() => {
   }
 }, [selectedTab, todayDiaryLogs, routines, generateDiaryAI]);
 
-  return (
-    <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
-      {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
-
-      {!isLoggedIn ? (
-        <div className="max-w-sm mx-auto p-6 mt-20 border rounded shadow space-y-4 font-sans">
-          <h2 className="text-xl font-semibold text-center">로그인 해주세요</h2>
-          <input
-            type="text"
-            placeholder="아이디"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-          />
-          <input
-            type="password"
-            placeholder="비밀번호"
-            value={userPw}
-            onChange={(e) => setUserPw(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-          />
-
-          <div className="flex justify-between items-center mt-1">
-            <button
-              onClick={() => {
-                setAdminModeActive(!adminModeActive);
-                setLoginError("");
-                setUserId("");
-                setUserPw("");
-                setUserAddError("");
-              }}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {adminModeActive ? "일반 로그인 모드로 전환" : "관리자 모드"}
-            </button>
-            <button
-              onClick={handleLogin}
-              className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition"
-            >
-              로그인
-            </button>
-          </div>
-
+        return (
+      <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
+        {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
+  
+        {!isLoggedIn ? (
+          <div className="max-w-sm mx-auto p-6 mt-20 border rounded shadow space-y-4 font-sans">
+            <h2 className="text-xl font-semibold text-center">로그인 해주세요</h2>
+            <input
+              type="text"
+              placeholder="아이디"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              className="border rounded px-3 py-2 w-full"
+            />
+            <input
+              type="password"
+              placeholder="비밀번호"
+              value={userPw}
+              onChange={(e) => setUserPw(e.target.value)}
+              className="border rounded px-3 py-2 w-full"
+            />
+  
+            <div className="flex justify-between items-center mt-1">
+              <button
+                onClick={() => {
+                  setAdminModeActive(!adminModeActive);
+                  setLoginError("");
+                  setUserId("");
+                  setUserPw("");
+                  setUserAddError("");
+                }}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                {adminModeActive ? "일반 로그인 모드로 전환" : "관리자 모드"}
+              </button>
+              <button
+                onClick={handleLogin}
+                className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition"
+              >
+                로그인
+              </button>
+            </div>
+           }
           {loginError && <p className="text-red-600">{loginError}</p>}
 
           {adminModeActive && (
