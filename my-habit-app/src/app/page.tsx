@@ -817,7 +817,6 @@ return (
   {selectedTab === "tracker" && (
     <Stats
       routines={routines}
-      selectedDay={selectedDay}
       onDownloadCsv={() => downloadCSV(routines)}
     />
   )}
