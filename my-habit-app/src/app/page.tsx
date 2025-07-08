@@ -486,23 +486,26 @@ useEffect(() => {
       }
     }
   })();
-}, [routines, todayDiaryLogs, generated5, generated10]);
+ }, [routines, todayDiaryLogs, generated5, generated10]);
 
-
-
-
-return (
+  // ──────────────────────────────────────────────────────────────
+  // JSX 리턴 시작 (로그인 분기)
+  // ──────────────────────────────────────────────────────────────
+ return (
   <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
     {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
 
     {!isLoggedIn ? (
       <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
-        <div className="text-right">
-          <button onClick={handleLocalLogin}>로그인</button>
-          <button onClick={handleAddUser}>사용자 등록</button>
-        </div>
+        <button onClick={handleLocalLogin} className="w-full py-2 bg-black text-white rounded">
+          로그인
+        </button>
+        <button onClick={handleAddUser} className="w-full py-2 bg-gray-300 rounded">
+          사용자 등록
+        </button>
+        {loginError && <p className="text-red-600 text-sm">{loginError}</p>}
       </div>
-    ) : (            // ← 삼항 연산자 제대로 닫기
+    ) : (
       <>
         <div className="flex justify-end gap-2">
           <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
@@ -510,72 +513,16 @@ return (
             로그아웃
           </button>
         </div>
-      </>
-       ) : (
-         <>
-           <div className="flex justify-end gap-2">
-             <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
-             <button onClick={handleLogout} className="text-red-600 underline text-sm">
-               로그아웃
-             </button>
-           </div>
-         </>
-       )}
-     </div>
-   );
-        <>
-          {/* 로그인 후 보여줄 UI */}
-          <div className="flex justify-end gap-2">
-            <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
-            <button onClick={handleLogout} className="text-red-600 underline text-sm">로그아웃</button>
-          </div>
-          {/* … 이하 생략 … */}
-        </>
-      )}
-    </div>
-);
-        <div className="flex justify-end gap-2">
-          <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
-          <button onClick={handleLogout} className="text-red-600 underline text-sm">
-           로그아웃
+        {isAdmin && (
+          <button className="mb-4 px-4 py-2 bg-red-600 text-white rounded font-semibold">
+            관리자 모드
           </button>
-        </div>
-              로그아웃
-            </button>
-          </div>
-
-          {isAdmin && (
-            <button className="mb-4 px-4 py-2 bg-red-600 text-white rounded font-semibold">
-              관리자 모드
-            </button>
-          )}
-
-          <div className="flex justify-center items-center gap-4">
-            <button aria-label="Previous Week" onClick={handlePrevWeek} className="px-3 py-1 text-lg font-bold">
-              &lt;
-            </button>
-            <span className="font-semibold text-lg">{formatWeekLabel(currentDate, weekNum)}</span>
-            <button aria-label="Next Week" onClick={handleNextWeek} className="px-3 py-1 text-lg font-bold">
-              &gt;
-            </button>
-          </div>
-
-          <div className="flex justify-center gap-3 mt-2">
-            {dayLetters.map((letter, idx) => (
-              <div key={letter + idx} className="flex flex-col items-center">
-                <span className="text-xs text-gray-500">{formatMonthDay(currentDate, idx)}</span>
-                <button
-                  onClick={() => setSelectedDay(fullDays[idx])}
-                  className={`rounded-full w-8 h-8 flex items-center justify-center font-semibold ${
-                    selectedDay === fullDays[idx] ? "bg-black text-white" : "bg-gray-300 text-black"
-                  }`}
-                  aria-label={fullDays[idx]}
-                >
-                  {letter}
-                </button>
-              </div>
-            ))}
-          </div>
+        )}
+        {/* 이후 나머지 탭 및 내용 렌더링 */}
+      </>
+    )}
+  </div>
+);
 
           <div className="flex justify-center gap-4 mt-4">
             <button
