@@ -8,6 +8,7 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Routine" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "date" TEXT NOT NULL,
     "day" TEXT NOT NULL,
     "start" TEXT NOT NULL,
     "end" TEXT NOT NULL,
