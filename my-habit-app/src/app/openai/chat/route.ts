@@ -7,12 +7,29 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const runtime = "nodejs";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+
+// OPTIONS handler: CORS preflight
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders
+  });
+}
+
 // GET handler: 안내 메시지 반환
 export async function GET() {
   const msg = "Welcome to Habit Recommendation API. Please use POST with JSON body: { prevTask, nextTask }.";
   return new Response(msg, {
     status: 200,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/plain; charset=utf-8"
+    },
   });
 }
 
@@ -23,7 +40,10 @@ export async function POST(request: NextRequest) {
     if (!prevTask && !nextTask) {
       return new Response(
         JSON.stringify({ error: "No context provided (prevTask or nextTask required)" }),
-        { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
+        }
       );
     }
 
@@ -63,7 +83,10 @@ export async function POST(request: NextRequest) {
     if (suggestions.length === 0) {
       return new Response(
         JSON.stringify({ error: "No suggestions generated" }),
-        { status: 502, headers: { "Content-Type": "application/json; charset=utf-8" } }
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
+        }
       );
     }
 
@@ -72,7 +95,7 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ result: suggestions }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json; charset=utf-8" },
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
       }
     );
   } catch (error: unknown) {
@@ -80,7 +103,10 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { "Content-Type": "application/json; charset=utf-8" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
+      }
     );
   }
 }
