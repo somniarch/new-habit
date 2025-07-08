@@ -221,20 +221,7 @@ export default function Page() {
   }, [todayDiaryLogs, diaryLogsKey, userId]);
 
   // ── 주간 완료율 데이터
-  const completionData = fullDays.map((day) => {
-    const total = routines.filter(r => r.day === day).length;
-    const done  = routines.filter(r => r.day === day && r.done).length;
-    return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
-  });
-  
-  // ── 주간 만족도 데이터
-  const satisfactionData = fullDays.map((day) => {
-    const filtered = routines.filter((r) => r.day === day && r.done);
-    const avg = filtered.length
-      ? Math.round(filtered.reduce((acc, cur) => acc + cur.rating, 0) / filtered.length)
-      : 0;
-    return { name: day, Satisfaction: avg };
-  });
+
   
   // 전체 로그를 CSV로 내보내는 새로운 downloadCSV
   function downloadCSV(data: Routine[]) {
@@ -512,7 +499,7 @@ Content: ${promptBase}
         setDiarySummariesAI((prev) => ({ ...prev, [day]: summary }));
       }
     }
-  }, [todayDiaryLogs, routines, diarySummariesAI]);
+  }, [todayDiaryLogs, routines, diarySummariesAI, loadingAI]);
 
   useEffect(() => {
     (async () => {
@@ -529,7 +516,6 @@ Content: ${promptBase}
           .filter(r => r.rating === maxRating)
           .map(r => r.task);
         const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-        const imageUrl = await generateImageAI(promptBase);          if (imageUrl) {
             setDiaryImagesAI((prev) => ({ ...prev, [day]: imageUrl }));
           }
           setLoadingAI((prev) => ({ ...prev, [day]: false }));
@@ -815,79 +801,64 @@ Content: ${promptBase}
             </div>
           )}
 
-      {selectedTab === "tracker" && (
-        <div className="mt-4 space-y-6">
-          <h2 className="font-semibold text-center">습관 통계 — {selectedDay}</h2>
-      
-          {/* ── 주간 통계 ── */}
-          <div>
-            <h3 className="mb-2 font-semibold text-sm">이번 주 ({selectedDay})</h3>
-            <ResponsiveContainer width="100%" height={150}>
-              <BarChart
-                data={[{
-                  name: selectedDay,
-                  Completion: (() => {
-                    const done = routines.filter(r => r.day === selectedDay && r.done).length;
-                    const total = routines.filter(r => r.day === selectedDay).length;
-                    return total ? Math.round(done / total * 100) : 0;
-                  })(),
-                  Satisfaction: (() => {
-                    const doneArr = routines.filter(r => r.day === selectedDay && r.done);
-                    return doneArr.length
-                      ? Math.round(doneArr.reduce((s, r) => s + r.rating, 0) / doneArr.length)
-                      : 0;
-                  })()
-                }]}
-              >
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="Completion" fill="#0f172a" />
-                <Bar dataKey="Satisfaction" fill="#1e40af" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-      
-          {/* ── 월간 통계 ── */}
-          <div>
-            <h3 className="mb-2 font-semibold text-sm">이번 달 ({selectedDay})</h3>
-            <ResponsiveContainer width="100%" height={150}>
-              <BarChart
-                data={(() => {
-                  const today = new Date(currentDate);
-                  const year = today.getFullYear();
-                  const month = today.getMonth();
-                  const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  const arr: { name: string; Completion: number; Satisfaction: number }[] = [];
-                  for (let d = 1; d <= daysInMonth; d++) {
-                    const dt = new Date(year, month, d);
-                    if (dt.getDay() === fullDays.indexOf(selectedDay) + 1) {
-                      const iso = dt.toISOString().split("T")[0];
-                      const dayRoutines = routines.filter(r => r.date === iso);
-                      const done = dayRoutines.filter(r => r.done).length;
-                      const sat = done
-                        ? Math.round(dayRoutines.filter(r => r.done).reduce((s, r) => s + r.rating, 0) / done)
-                        : 0;
-                      arr.push({
-                        name: `${d}일`,
-                        Completion: dayRoutines.length ? Math.round(done / dayRoutines.length * 100) : 0,
-                        Satisfaction: sat
-                      });
-                    }
-                  }
-                  return arr;
-                })()}
-              >
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="Completion" fill="#0f172a" />
-                <Bar dataKey="Satisfaction" fill="#1e40af" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+{selectedTab === "tracker" && (
+  <div className="mt-4 space-y-6">
+    <h2 className="font-semibold text-center">습관 통계 — {selectedDay}</h2>
+
+    {/* ── 주간 통계 ── */}
+    <div>
+      <h3 className="mb-2 font-semibold text-sm">이번 주 ({selectedDay})</h3>
+      <ResponsiveContainer width="100%" height={150}>
+        <BarChart
+          data={[{
+            name: selectedDay,
+            Completion: (() => {
+              const done = routines.filter(r => r.day === selectedDay && r.done).length;
+              const total = routines.filter(r => r.day === selectedDay).length;
+              return total ? Math.round(done / total * 100) : 0;
+            })(),
+            Satisfaction: (() => {
+              const doneArr = routines.filter(r => r.day === selectedDay && r.done);
+              return doneArr.length
+                ? Math.round(doneArr.reduce((s, r) => s + r.rating, 0) / doneArr.length)
+                : 0;
+            })()
+          }]}
+        >
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="Completion" fill="#0f172a" />
+          <Bar dataKey="Satisfaction" fill="#1e40af" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+
+    {/* ── 월간 통계 ── */}
+    <div>
+      <h3 className="mb-2 font-semibold text-sm">이번 달 ({selectedDay})</h3>
+      <ResponsiveContainer width="100%" height={150}>
+        <BarChart data={/* 월간 데이터 계산 로직 */}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="Completion" fill="#0f172a" />
+          <Bar dataKey="Satisfaction" fill="#1e40af" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+
+    {/* ── 전체 로그 CSV 다운로드 버튼 ── */}
+    <div className="text-center mt-4">
+      <button
+        onClick={() => downloadCSV(routines)}
+        className="rounded-full bg-black text-white px-6 py-2 font-semibold hover:bg-gray-800 transition"
+      >
+        전체 로그 CSV 다운로드
+      </button>
+    </div>
+  </div>
+)}
 
 
           {selectedTab === "today-diary" && (
