@@ -11,9 +11,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// 주간 필터용: 월~일
-const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
-
 // Routine 타입 정의
 export interface Routine {
   date: string;     // "YYYY-MM-DD" 형식
@@ -25,7 +22,6 @@ export interface Routine {
 
 interface StatsProps {
   routines: Routine[];
-  selectedDay?: string;   // 페이지 컴포넌트에서 넘겨줄 수 있으나, 이 버전에선 전체 주간 기준이므로 사용 안 함
   onDownloadCsv: () => void;
 }
 
