@@ -796,11 +796,22 @@ return (
               <h2 className="text-center font-semibold text-xl mb-4">오늘 일기</h2>
                {/* selectedDay만 렌더 */}
                {(() => {
-                 const completedTasks = todayDiaryLogs[selectedDay] || [];
+                 // selectedDay → 실제 ISO 날짜 계산
+                 const dayIdx = fullDays.indexOf(selectedDay);     // 0=월...6=일
+                 const d = new Date(currentDate);
+                 d.setDate(currentDate.getDate() - currentDate.getDay() + (dayIdx + 1));
+                 const iso = d.toISOString().split("T")[0];
+              
+                 // routines 에서 해당 날짜에 done === true 인 task 목록 추출
+                 const completedTasks = routines
+                   .filter(r => r.date === iso && r.done)
+                   .map(r => r.task);
+                 // 행동이 하나도 없으면 일기 미표시
+                 if (completedTasks.length === 0) return null;
                  if (completedTasks.length < 5) return null;
                  const idx = fullDays.indexOf(selectedDay);
                  const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
-                 const summary = diarySummariesAI[selectedDay] || warmSummary(completedTasks);
+                 const summary = diarySummariesAI[iso] || warmSummary(completedTasks);
                  const imageUrl = diaryImagesAI[selectedDay];
                  return (
                    <div key={selectedDay} className="mb-6">
