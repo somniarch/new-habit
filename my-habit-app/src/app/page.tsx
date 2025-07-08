@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image"; 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import DiarySection from "@/components/DiarySection";
-
 
 type Routine = {
   date: string; 
@@ -440,6 +438,78 @@ export default function Page() {
   setHabitSuggestionIdx(idx);
 
   };
+
+   async function generateSummaryAI(_day: string, _tasks: string[]): Promise<string> {
+    try {
+      const prompt = `다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:\n${_tasks.join(", ")}\n이 내용을 바탕으로 따뜻하고 긍정적인 응원의 메시지와 함께 짧게 요약해 주세요.`;
+      const res = await fetch("/openai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      if (res.ok && data.result) {
+        return data.result;
+      }
+      return "";
+    } catch (e) {
+      console.error(e);
+      return "";
+    }
+  }
+
+  async function generateImageAI(promptBase: string): Promise<string> {
+    try {
+  const prompt = `
+A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art.
+Gentle, muted colors like orange, yellow, brown, and green.
+The composition should feel peaceful and heartwarming, like a moment captured in a personal journal.
+No humans should appear in the image.
+The drawing should evoke quiet satisfaction and mindfulness.
+
+Content: ${promptBase}
+`;
+
+      const res = await fetch("/openai/generate-image", {  // 경로 확인
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      if (res.ok && data.imageUrl) {
+        return data.imageUrl;
+      }
+      return "";
+    } catch (e) {
+      console.error(e);
+      return "";
+    }
+  }
+
+ const generateDiaryAI = useCallback(async () => {
+  for (const day of fullDays) {
+    const completedTasks = todayDiaryLogs[day]?.filter((task) =>
+      routines.find((r) => r.day === day && r.task === task && r.done)
+    ) || [];
+    if (completedTasks.length < 5) continue;
+
+    // **최고 만족도 행동** 모아서 요약 생성
+    const doneEntries = routines.filter(r => r.day === day && r.done);
+    const maxRating = Math.max(...doneEntries.map(r => r.rating));
+    const topTasks = doneEntries
+      .filter(r => r.rating === maxRating)
+      .map(r => r.task);
+
+    if (doneEntries.length < 5) continue;
+
+    if (!loadingAI[day] && topTasks.length > 0) {
+      const summary = await generateSummaryAI(day, completedTasks);
+      setDiarySummariesAI(prev => ({ ...prev, [day]: summary }));
+    }
+  }
+}, [todayDiaryLogs, routines, loadingAI]);
+
+
 useEffect(() => {
   (async () => {
     for (const day of fullDays) {
@@ -837,33 +907,41 @@ return (
     )}
 
 
-    {selectedTab === "today-diary" && (
-    <>
-      {/* 1) 요약 부분 (클라이언트 컴포넌트) */}
-      <DiarySection
-        day={selectedDay}
-        tasks={
-          (todayDiaryLogs[selectedDay] || []).filter((task) =>
-            routines.some(
-              (r) => r.day === selectedDay && r.task === task && r.done
-            )
-          )
-        }
-      />
+          {selectedTab === "today-diary" && (
+            <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
+              <h2 className="text-center font-semibold text-xl mb-4">오늘 일기</h2>
+               {/* selectedDay만 렌더 */}
+               {(() => {
+                 const completedTasks = todayDiaryLogs[selectedDay] || [];
+                 if (completedTasks.length < 5) return null;
+                 const idx = fullDays.indexOf(selectedDay);
+                 const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
+                 const summary = diarySummariesAI[selectedDay] || warmSummary(completedTasks);
+                 const imageUrl = diaryImagesAI[selectedDay];
+                 return (
+                   <div key={selectedDay} className="mb-6">
+                     <h3 className="font-semibold">{diaryDateStr}</h3>
+                     <p className="mb-2 whitespace-pre-line">{summary}</p>
+                     {/* … 이미지 표시 … */}
+                      {imageUrl && (
+                        <div className="mt-2 w-full rounded overflow-hidden relative" style={{ aspectRatio: "4/3" }}>
+                          <Image
+                            src={imageUrl}
+                            alt="오늘의 다이어리 일러스트"
+                            fill                             // 부모 <div> 를 꽉 채우도록
+                            style={{ objectFit: "cover" }}  // 이미지 비율 유지하며 잘라내기
+                            priority                         // LCP 최적화 (선택)
+                          />
+                    </div>
+                  )}
+                </div>
+                 );
+               })()}
 
-      {/* 2) 이미지 부분 (기존 로직 그대로) */}
-      {diaryImagesAI[selectedDay] && (
-        <div
-          className="mt-4 w-full rounded overflow-hidden relative"
-          style={{ aspectRatio: "4/3" }}
-        >
-          <Image
-            src={diaryImagesAI[selectedDay]}
-            alt="오늘의 다이어리 일러스트"
-            fill
-            style={{ objectFit: "cover" }}
-            priority
-          />
-        </div>
+            </div>
+          )}
+        </>
       )}
-    </>
+    </div>
+  );
+}
