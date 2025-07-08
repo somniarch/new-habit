@@ -511,21 +511,18 @@ return (
           </button>
         </div>
       </>
-    )}
-  </div>
-);  // ← 이제 전체 JSX가 올바르게 닫힙니다
-        <>
-          {/* 로그인 후 화면 */}
-          <div className="flex justify-end gap-2">
-            <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
-            <button onClick={handleLogout} className="text-red-600 underline text-sm">
-              로그아웃
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
+       ) : (
+         <>
+           <div className="flex justify-end gap-2">
+             <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
+             <button onClick={handleLogout} className="text-red-600 underline text-sm">
+               로그아웃
+             </button>
+           </div>
+         </>
+       )}
+     </div>
+   );
         <>
           {/* 로그인 후 보여줄 UI */}
           <div className="flex justify-end gap-2">
