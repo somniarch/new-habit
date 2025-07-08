@@ -16,8 +16,11 @@ const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), { ssr: 
 const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis), { ssr: false });
 const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
 
+// 컴포넌트 밖에 두면 useMemo 의 deps 경고가 사라집니다.
+const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"] as const;
+
 interface Routine {
-  date: string;       // "2025-07-08" 형식
+  date: string;       // "YYYY-MM-DD"
   done: boolean;
   rating: number;
   isHabit?: boolean;
@@ -25,86 +28,82 @@ interface Routine {
 
 interface Props {
   routines: Routine[];
-  currentDate: string; // "2025-07-08" 형식
+  currentDate: string; // "YYYY-MM-DD"
 }
 
 export default function WeeklySummary({ routines, currentDate }: Props) {
-  // 요일 한글 레이블
-  const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
-
-  // 주간별(월~일) 통계 데이터 계산
   const weeklyData = useMemo(() => {
     const today = new Date(`${currentDate}T00:00:00`);
-    // JS: 일요일(0)~토요일(6) → 월(1)~일(0) 매핑
-    const dayIdx = (today.getDay() + 6) % 7; 
+    const dayIdx = (today.getDay() + 6) % 7;  // Mon=0…Sun=6
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - dayIdx);
-    
-    // 7일치 날짜 배열 생성
+
+    // 7일치 { date, label } 배열 만들기
     const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart);
       d.setDate(weekStart.getDate() + i);
-      const iso = d.toISOString().slice(0, 10); // "YYYY-MM-DD"
-      return { date: iso, label: DAY_LABELS[i] };
+      return {
+        date: d.toISOString().slice(0, 10),
+        label: DAY_LABELS[i],
+      };
     });
 
-    // 날짜별로 루틴 필터링해 모으기
-    const grouped = dates.map(({ date, label }) => {
+    // 각 날짜별로 필터링해서 통계 계산
+    return dates.map(({ date, label }) => {
       const items = routines.filter((r) => r.date === date);
       const totalCnt = items.length;
       const totalDone = items.filter((r) => r.done).length;
-      const totalRate = totalCnt ? Math.round((totalDone / totalCnt) * 100) : 0;
-      const totalSat =
-        totalDone > 0
-          ? Math.round(
-              items.filter((r) => r.done).reduce((s, r) => s + r.rating, 0) /
-                totalDone
-            )
-          : 0;
+      const totalCompletion = totalCnt
+        ? Math.round((totalDone / totalCnt) * 100)
+        : 0;
+      const totalSatisfaction = totalDone
+        ? Math.round(
+            items
+              .filter((r) => r.done)
+              .reduce((sum, r) => sum + r.rating, 0) / totalDone
+          )
+        : 0;
 
       const routinesOnly = items.filter((r) => !r.isHabit);
       const rCnt = routinesOnly.length;
       const rDone = routinesOnly.filter((r) => r.done).length;
-      const rRate = rCnt ? Math.round((rDone / rCnt) * 100) : 0;
-      const rSat =
-        rDone > 0
-          ? Math.round(
-              routinesOnly
-                .filter((r) => r.done)
-                .reduce((s, r) => s + r.rating, 0) /
-                rDone
-            )
-          : 0;
+      const routineCompletion = rCnt
+        ? Math.round((rDone / rCnt) * 100)
+        : 0;
+      const routineSatisfaction = rDone
+        ? Math.round(
+            routinesOnly
+              .filter((r) => r.done)
+              .reduce((s, r) => s + r.rating, 0) / rDone
+          )
+        : 0;
 
       const habitsOnly = items.filter((r) => r.isHabit);
       const hCnt = habitsOnly.length;
       const hDone = habitsOnly.filter((r) => r.done).length;
-      const hRate = hCnt ? Math.round((hDone / hCnt) * 100) : 0;
-      const hSat =
-        hDone > 0
-          ? Math.round(
-              habitsOnly
-                .filter((r) => r.done)
-                .reduce((s, r) => s + r.rating, 0) /
-                hDone
-            )
-          : 0;
+      const habitCompletion = hCnt
+        ? Math.round((hDone / hCnt) * 100)
+        : 0;
+      const habitSatisfaction = hDone
+        ? Math.round(
+            habitsOnly
+              .filter((r) => r.done)
+              .reduce((s, r) => s + r.rating, 0) / hDone
+          )
+        : 0;
 
       return {
         name: label,
-        totalCompletion: totalRate,
-        totalSatisfaction: totalSat,
-        routineCompletion: rRate,
-        routineSatisfaction: rSat,
-        habitCompletion: hRate,
-        habitSatisfaction: hSat,
+        totalCompletion,
+        totalSatisfaction,
+        routineCompletion,
+        routineSatisfaction,
+        habitCompletion,
+        habitSatisfaction,
       };
     });
-
-    return grouped;
   }, [routines, currentDate]);
 
-  // 렌더링할 차트 정의: [표시라벨, 데이터 키]
   const charts = [
     ["전체 달성률", "totalCompletion"],
     ["루틴 달성률", "routineCompletion"],
@@ -122,9 +121,10 @@ export default function WeeklySummary({ routines, currentDate }: Props) {
           <div className="w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData}>
-                <XAxis dataKey="name" />          {/* 월~일 레이블 */}
+                <XAxis dataKey="name" />
                 <YAxis domain={[0, 100]} />
-                <Tooltip formatter={(v: number) => `${v}%`} />
+                {/* annotation: formatter의 타입 애너테이션을 제거했습니다 */}
+                <Tooltip formatter={(value) => `${value}%`} />
                 <Bar dataKey={key} fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
