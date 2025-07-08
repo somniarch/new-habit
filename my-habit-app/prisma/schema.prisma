@@ -16,6 +16,7 @@ model User {
 
 model Routine {
   id       Int     @id @default(autoincrement())
+  date     String
   day      String
   start    String
   end      String
