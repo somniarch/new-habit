@@ -221,51 +221,7 @@ export default function Page() {
     }
   }, [todayDiaryLogs, diaryLogsKey, userId]);
 
-  // ── 주간 완료율 데이터
-
   
-
-
-  // 헤더 정의
-  const headers = [
-    "Date",
-    "Day",
-    "Start",
-    "End",
-    "Task",
-    "Done",
-    "Rating",
-    "IsHabit",
-  ];
-
-  // 모든 routines 항목을 한 줄씩 매핑
-  const rows = data.map(({ date, day, start, end, task, done, rating, isHabit }) => [
-    date, 
-    day,
-    start,
-    end,
-    `"${task.replace(/"/g, '""')}"`,
-    done ? "Yes" : "No",
-    rating.toString(),
-    isHabit ? "Yes" : "No",
-  ]);
-
-  // CSV 문자열 생성
-  const csvContent = [headers, ...rows]
-    .map((row) => row.join(","))
-    .join("\n");
-
-  // 다운로드 처리
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "all_habit_logs.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
 
 
   const addHabitBetween = (idx: number, habit: string) => {
@@ -293,6 +249,37 @@ export default function Page() {
     setRoutines(copy);
     setHabitSuggestionIdx(null);
   };
+
+
+// CSV 다운로드 함수
+const handleExportCSV = () => {
+  const headers = ["Date","Day","Start","End","Task","Done","Rating","IsHabit"];
+  const rows = routines.map(r => [
+    r.date,
+    r.day,
+    r.start,
+    r.end,
+    `"${r.task.replace(/"/g,'""')}"`,
+    r.done ? "Yes" : "No",
+    String(r.rating),
+    r.isHabit ? "Yes" : "No"
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(r => r.join(","))
+    .join("\n");
+
+  const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "all_habit_logs.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+};
+
+
 
   const handlePrevWeek = () => {
     setWeekNum((w) => Math.max(1, w - 1));
@@ -785,14 +772,21 @@ return (
           )}
           
         {selectedTab === "tracker" && (
-          <div className="mt-6">
-            <h2 className="text-center font-semibold text-xl mb-4">통계</h2>
-            <WeeklySummary
-              routines={routines}
-              currentDate={currentDate.toISOString().split("T")[0]}
-            />
-          </div>
-        )}
+        <div className="mt-6">
+          <h2 className="text-center font-semibold text-xl mb-4">통계</h2>
+          <WeeklySummary
+            routines={routines}
+            currentDate={currentDate.toISOString().split("T")[0]}
+          />
+          {/* 여기에 버튼 추가 */}
+          <button
+            onClick={handleExportCSV}
+            className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            모든 로그 CSV 다운로드
+          </button>
+        </div>
+      )}
           
           {selectedTab === "today-diary" && (
             <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
