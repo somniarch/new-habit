@@ -492,24 +492,28 @@ useEffect(() => {
 
 
 return (
-  <div>  
+  <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
+    {toast && <Toast emoji={toast.emoji} message={toast.message} onClose={() => setToast(null)} />}
+
     {!isLoggedIn ? (
-      <div className="auth-form …">
-        {/* 로그인 & 회원가입 버튼 */}
-        <button onClick={handleLocalLogin}>로그인</button>
-        <button onClick={handleAddUser}>사용자 등록</button>
+      <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
+        <div className="text-right">
+          <button onClick={handleLocalLogin}>로그인</button>
+          <button onClick={handleAddUser}>사용자 등록</button>
+        </div>
       </div>
-    ) : (
+    ) : (            // ← 삼항 연산자 제대로 닫기
       <>
-        {/* 로그인 후 화면 */}
         <div className="flex justify-end gap-2">
-          <span>안녕하세요, {session.user.email}님</span>
-          <button onClick={handleLogout}>로그아웃</button>
+          <span className="text-sm text-gray-600">안녕하세요, {session.user.email}님</span>
+          <button onClick={handleLogout} className="text-red-600 underline text-sm">
+            로그아웃
+          </button>
         </div>
       </>
     )}
   </div>
-);
+);  // ← 이제 전체 JSX가 올바르게 닫힙니다
         <>
           {/* 로그인 후 화면 */}
           <div className="flex justify-end gap-2">
