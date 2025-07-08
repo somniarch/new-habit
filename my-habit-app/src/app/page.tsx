@@ -359,19 +359,19 @@ export default function Page() {
     }
 
     // 순수 텍스트로 받기
-    const raw = await res.text();
-    console.log("[fetchHabitSuggestions] raw response:", raw);
+    const data = await res.json();
+    console.log("[fetchHabitSuggestions] JSON response:", data);
 
-    // 빈 응답 방어
-    if (!raw.trim()) {
-      throw new Error("추천 결과가 없습니다.");
+    // result가 배열이 아니면 오류
+    if (!data.result || !Array.isArray(data.result)) {
+      throw new Error("추천 결과 포맷이 올바르지 않습니다.");
     }
 
-    // 줄바꿈 단위로 분할 + 공백 줄 제거
-    return raw
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line);
+    // "1) 2분 심호흡🌬️" → "2분 심호흡🌬️" 처럼
+    return data.result.map((item: string) =>
+      // 숫자+') ' 제거
+      item.replace(/^\s*\d+\)\s*/, "")
+    );
 
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "추천 중 오류 발생";
