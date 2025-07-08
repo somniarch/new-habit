@@ -515,10 +515,12 @@ Content: ${promptBase}
         const topTasks = doneEntries
           .filter(r => r.rating === maxRating)
           .map(r => r.task);
-        const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-            setDiaryImagesAI((prev) => ({ ...prev, [day]: imageUrl }));
-          }
-          setLoadingAI((prev) => ({ ...prev, [day]: false }));
+         const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
+         const imageUrl = await generateImageAI(promptBase);
+         if (imageUrl) {
+          setDiaryImagesAI((prev) => ({ ...prev, [day]: imageUrl }));
+         }
+         setLoadingAI((prev) => ({ ...prev, [day]: false }));
         }
       }
     })();
