@@ -5,6 +5,7 @@ import Image from "next/image";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 type Routine = {
+  date: string; 
   day: string;
   start: string;
   end: string;
@@ -297,13 +298,18 @@ export default function Page() {
     setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000));
   };
 
-  const handleAddRoutine = () => {
-    if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
-    if (!newRoutine.task.trim()) return;
-    setRoutines((prev) => [
-      ...prev,
-      { day: selectedDay, done: false, rating: 0, ...newRoutine },
-    ]);
+  const today = new Date(currentDate);
+  const dayIdx = fullDays.indexOf(selectedDay);
+  // 이번 주의 selectedDay 실제 날짜 계산
+  const realDate = new Date(today);
+  realDate.setDate(
+    today.getDate() - today.getDay() + (dayIdx + 1)
+  );
+  const isoDate = realDate.toISOString().split("T")[0];
+  setRoutines(prev => [
+    ...prev,
+    { date: isoDate, day: selectedDay, done: false, rating: 0, ...newRoutine },
+  ]);
     setNewRoutine({ start: "08:00", end: "09:00", task: "" });
   };
 
@@ -769,80 +775,101 @@ Content: ${promptBase}
             </div>
           )}
 
-          {selectedTab === "tracker" && (
-            <div className="mt-4 space-y-6">
-              <h2 className="font-semibold text-center">습관 통계</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">완료율 (%)</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={completionData}>
-                      <XAxis dataKey="name" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip />
-                      <Bar dataKey="Completion" fill="#0f172a" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">평균 만족도</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={satisfactionData}>
-                      <XAxis dataKey="name" />
-                      <YAxis domain={[0, 10]} />
-                      <Tooltip />
-                      <Bar dataKey="Satisfaction" fill="#0f172a" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+      {selectedTab === "tracker" && (
+        <div className="mt-4 space-y-6">
+          <h2 className="font-semibold text-center">습관 통계 — {selectedDay}</h2>
+      
+          {/* ── 주간 통계 ── */}
+          <div>
+            <h3 className="mb-2 font-semibold text-sm">이번 주 ({selectedDay})</h3>
+            <ResponsiveContainer width="100%" height={150}>
+              <BarChart
+                data={[{
+                  name: selectedDay,
+                  Completion: (() => {
+                    const done = routines.filter(r => r.day === selectedDay && r.done).length;
+                    const total = routines.filter(r => r.day === selectedDay).length;
+                    return total ? Math.round(done / total * 100) : 0;
+                  })(),
+                  Satisfaction: (() => {
+                    const doneArr = routines.filter(r => r.day === selectedDay && r.done);
+                    return doneArr.length
+                      ? Math.round(doneArr.reduce((s, r) => s + r.rating, 0) / doneArr.length)
+                      : 0;
+                  })()
+                }]}
+              >
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="Completion" fill="#0f172a" />
+                <Bar dataKey="Satisfaction" fill="#1e40af" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+      
+          {/* ── 월간 통계 ── */}
+          <div>
+            <h3 className="mb-2 font-semibold text-sm">이번 달 ({selectedDay})</h3>
+            <ResponsiveContainer width="100%" height={150}>
+              <BarChart
+                data={(() => {
+                  const today = new Date(currentDate);
+                  const year = today.getFullYear();
+                  const month = today.getMonth();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const arr: { name: string; Completion: number; Satisfaction: number }[] = [];
+                  for (let d = 1; d <= daysInMonth; d++) {
+                    const dt = new Date(year, month, d);
+                    if (dt.getDay() === fullDays.indexOf(selectedDay) + 1) {
+                      const iso = dt.toISOString().split("T")[0];
+                      const dayRoutines = routines.filter(r => r.date === iso);
+                      const done = dayRoutines.filter(r => r.done).length;
+                      const sat = done
+                        ? Math.round(dayRoutines.filter(r => r.done).reduce((s, r) => s + r.rating, 0) / done)
+                        : 0;
+                      arr.push({
+                        name: `${d}일`,
+                        Completion: dayRoutines.length ? Math.round(done / dayRoutines.length * 100) : 0,
+                        Satisfaction: sat
+                      });
+                    }
+                  }
+                  return arr;
+                })()}
+              >
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="Completion" fill="#0f172a" />
+                <Bar dataKey="Satisfaction" fill="#1e40af" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
-              <div className="text-center mt-4">
-                <button
-                  onClick={() => downloadCSV(routines)}
-                  className="rounded-full bg-black text-white px-6 py-2 font-semibold hover:bg-gray-800 transition"
-                >
-                  CSV 다운로드
-                </button>
-              </div>
-            </div>
-          )}
 
           {selectedTab === "today-diary" && (
             <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
               <h2 className="text-center font-semibold text-xl mb-4">오늘 일기</h2>
-              {fullDays.map((day, idx) => {
-                const completedTasks = todayDiaryLogs[day]?.filter((task) =>
-                  routines.find((r) => r.day === day && r.task === task && r.done)
-                ) || [];
-                if (completedTasks.length < 5) return null;
+               {/** selectedDay만 렌더 */}
+               {(() => {
+                 const completedTasks = todayDiaryLogs[selectedDay] || [];
+                 if (completedTasks.length < 5) return null;
+                 const idx = fullDays.indexOf(selectedDay);
+                 const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
+                 const summary = diarySummariesAI[selectedDay] || warmSummary(completedTasks);
+                 const imageUrl = diaryImagesAI[selectedDay];
+                 return (
+                   <div key={selectedDay} className="mb-6">
+                     <h3 className="font-semibold">{diaryDateStr}</h3>
+                     <p className="mb-2 whitespace-pre-line">{summary}</p>
+                     {/* … 이미지 표시 … */}
+                   </div>
+                 );
+               })()}
 
-                const diaryDateStr = formatDiaryDate(day, currentDate, idx);
-                const summary = diarySummariesAI[day] || warmSummary(completedTasks);
-                const imageUrl = diaryImagesAI[day];
-
-                return (
-                  <div key={day} className="mb-6">
-                    <h3 className="font-semibold">{diaryDateStr}</h3>
-                    <p className="mb-2 whitespace-pre-line">{summary}</p>
-                    {loadingAI[day] ? (
-                      <p className="italic text-blue-500">AI 이미지 생성 중입니다...</p>
-                    ) : imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt={`일기 일러스트: ${diaryDateStr}`}
-                        width={256}
-                        height={256}
-                        className="w-64 h-64 object-cover rounded shadow-md"
-                        loading="lazy"
-                        unoptimized
-                      />
-                    ) : (
-                      <p className="italic text-gray-400">이미지가 없습니다.</p>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           )}
         </>
