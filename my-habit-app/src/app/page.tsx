@@ -913,6 +913,13 @@ useEffect(() => {
                      <h3 className="font-semibold">{diaryDateStr}</h3>
                      <p className="mb-2 whitespace-pre-line">{summary}</p>
                      {/* … 이미지 표시 … */}
+                     {imageUrl && (
+                       <img
+                         src={imageUrl}
+                         alt="오늘의 다이어리 일러스트"
+                         className="mt-2 w-full rounded"
+                       />
+                     )}
                    </div>
                  );
                })()}
