@@ -4,23 +4,23 @@ import React, { useMemo } from "react";
 import dynamic from "next/dynamic";
 
 const ResponsiveContainer = dynamic(
-  () => import("recharts").then((mod) => mod.ResponsiveContainer),
+  () => import("recharts").then((m) => m.ResponsiveContainer),
   { ssr: false }
 );
 const BarChart = dynamic(
-  () => import("recharts").then((mod) => mod.BarChart),
+  () => import("recharts").then((m) => m.BarChart),
   { ssr: false }
 );
-const Bar = dynamic(() => import("recharts").then((mod) => mod.Bar), { ssr: false });
-const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), { ssr: false });
-const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis), { ssr: false });
-const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
+const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false });
+const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then((m) => m.Tooltip), { ssr: false });
 
-// 컴포넌트 밖에 두면 useMemo 의 deps 경고가 사라집니다.
+// x축 레이블: 월~일
 const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"] as const;
 
 interface Routine {
-  date: string;       // "YYYY-MM-DD"
+  date: string;    // "YYYY-MM-DD" 형식, 스케줄된 날짜
   done: boolean;
   rating: number;
   isHabit?: boolean;
@@ -33,34 +33,41 @@ interface Props {
 
 export default function WeeklySummary({ routines, currentDate }: Props) {
   const weeklyData = useMemo(() => {
-    const today = new Date(`${currentDate}T00:00:00`);
-    const dayIdx = (today.getDay() + 6) % 7;  // Mon=0…Sun=6
+    // 1) currentDate를 로컬 기준 자정으로 파싱
+    const [yy, mm, dd] = currentDate.split("-").map(Number);
+    const today = new Date(yy, mm - 1, dd);
+    
+    // 2) 이번 주 월요일로 이동
+    const jsDay = today.getDay();            // 0=일…6=토
+    const monOffset = (jsDay + 6) % 7;        // 월=0…일=6
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - dayIdx);
+    weekStart.setDate(today.getDate() - monOffset);
 
-    // 7일치 { date, label } 배열 만들기
-    const dates = Array.from({ length: 7 }, (_, i) => {
+    // 3) 7일치(월→일) 배열 생성
+    return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart);
       d.setDate(weekStart.getDate() + i);
-      return {
-        date: d.toISOString().slice(0, 10),
-        label: DAY_LABELS[i],
-      };
-    });
 
-    // 각 날짜별로 필터링해서 통계 계산
-    return dates.map(({ date, label }) => {
-      const items = routines.filter((r) => r.date === date);
-      const totalCnt = items.length;
-      const totalDone = items.filter((r) => r.done).length;
-      const totalCompletion = totalCnt
-        ? Math.round((totalDone / totalCnt) * 100)
+      // ISO 문자열과, x축에 표시할 레이블
+      const Y = d.getFullYear();
+      const M = String(d.getMonth() + 1).padStart(2, "0");
+      const D = String(d.getDate()).padStart(2, "0");
+      const isoDate = `${Y}-${M}-${D}`;       // "2025-07-07"
+      const label = DAY_LABELS[i];            // "월","화",…
+
+      // 이 날짜에 **설정된** 루틴/습관만 필터링
+      const items = routines.filter((r) => r.date === isoDate);
+      const total = items.length;
+      const doneCount = items.filter((r) => r.done).length;
+      const totalCompletion = total
+        ? Math.round((doneCount / total) * 100)
         : 0;
-      const totalSatisfaction = totalDone
+      const totalSatisfaction = doneCount
         ? Math.round(
             items
               .filter((r) => r.done)
-              .reduce((sum, r) => sum + r.rating, 0) / totalDone
+              .reduce((sum, r) => sum + r.rating, 0) /
+              doneCount
           )
         : 0;
 
@@ -74,7 +81,8 @@ export default function WeeklySummary({ routines, currentDate }: Props) {
         ? Math.round(
             routinesOnly
               .filter((r) => r.done)
-              .reduce((s, r) => s + r.rating, 0) / rDone
+              .reduce((s, r) => s + r.rating, 0) /
+              rDone
           )
         : 0;
 
@@ -88,12 +96,13 @@ export default function WeeklySummary({ routines, currentDate }: Props) {
         ? Math.round(
             habitsOnly
               .filter((r) => r.done)
-              .reduce((s, r) => s + r.rating, 0) / hDone
+              .reduce((s, r) => s + r.rating, 0) /
+              hDone
           )
         : 0;
 
       return {
-        name: label,
+        name: label,                 // x축: "월" 등
         totalCompletion,
         totalSatisfaction,
         routineCompletion,
@@ -123,8 +132,7 @@ export default function WeeklySummary({ routines, currentDate }: Props) {
               <BarChart data={weeklyData}>
                 <XAxis dataKey="name" />
                 <YAxis domain={[0, 100]} />
-                {/* annotation: formatter의 타입 애너테이션을 제거했습니다 */}
-                <Tooltip formatter={(value) => `${value}%`} />
+                <Tooltip />
                 <Bar dataKey={key} fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
