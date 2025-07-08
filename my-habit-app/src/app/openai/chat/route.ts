@@ -69,6 +69,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // body에서 필요한 값들 구조분해
+    const { prevTask, nextTask, prompt } = body;
+
+    // 일기 요약 분기: prompt만 있을 때
+    if (prompt && !prevTask && !nextTask) {
+      console.log("[API] Diary summary mode");
+      const diaryPrompt = `다음은 사용자의 오늘 달성한 습관 및 일과 목록입니다:
+${prompt}
+
+이 중 특히 의미 있었던 순간과 그때 느낀 감정을 간결하게 담아,
+사용자의 노력을 진심으로 칭찬하며 따뜻하고 생동감 있는 일기 형식으로 짧게 요약해 주세요.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "따뜻하고 구체적인 일기 요약을 작성하는 전문가입니다." },
+          { role: "user", content: diaryPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 200
+      });
+
+      const summary = completion.choices[0]?.message?.content?.trim() ?? "";
+      console.log("[API] Diary summary response:", summary);
+
+      return new NextResponse(
+        JSON.stringify({ result: summary }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json; charset=utf-8"
+          }
+        }
+      );
+    }
+
     // POST handler 안
 if (prompt && !prevTask && !nextTask) {
   console.log("[API] Diary summary mode");
