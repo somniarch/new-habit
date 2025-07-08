@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image"; 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Stats } from "@/components/ui/Stats";
 
 type Routine = {
   date: string; 
@@ -814,13 +814,13 @@ return (
             </div>
           )}
 
- {selectedTab === "tracker" && (
-   <Stats
-     routines={routines}
-     selectedDay={selectedDay}
-     onDownloadCsv={() => downloadCSV(routines)}
-   />
- )}
+  {selectedTab === "tracker" && (
+    <Stats
+      routines={routines}
+      selectedDay={selectedDay}
+      onDownloadCsv={() => downloadCSV(routines)}
+    />
+  )}
 
 
           {selectedTab === "today-diary" && (
