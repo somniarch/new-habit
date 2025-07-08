@@ -907,41 +907,38 @@ useEffect(() => {
     )}
 
 
-          {selectedTab === "today-diary" && (
-            <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
-              <h2 className="text-center font-semibold text-xl mb-4">오늘 일기</h2>
-               {/* selectedDay만 렌더 */}
-               {(() => {
-                 const completedTasks = todayDiaryLogs[selectedDay] || [];
-                 if (completedTasks.length < 5) return null;
-                 const idx = fullDays.indexOf(selectedDay);
-                 const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
-                 const summary = diarySummariesAI[selectedDay] || warmSummary(completedTasks);
-                 const imageUrl = diaryImagesAI[selectedDay];
-                 return (
-                   <div key={selectedDay} className="mb-6">
-                     <h3 className="font-semibold">{diaryDateStr}</h3>
-                     <p className="mb-2 whitespace-pre-line">{summary}</p>
-                     {/* … 이미지 표시 … */}
-                      {imageUrl && (
-                        <div className="mt-2 w-full rounded overflow-hidden relative" style={{ aspectRatio: "4/3" }}>
-                          <Image
-                            src={imageUrl}
-                            alt="오늘의 다이어리 일러스트"
-                            fill                             // 부모 <div> 를 꽉 채우도록
-                            style={{ objectFit: "cover" }}  // 이미지 비율 유지하며 잘라내기
-                            priority                         // LCP 최적화 (선택)
-                          />
-                    </div>
-                  )}
-                </div>
-                 );
-               })()}
+{selectedTab === "today-diary" && (
+  <div className="mt-4 space-y-6 max-h-[480px] overflow-y-auto border rounded p-4 bg-gray-50 pb-8">
+    <h2 className="text-center font-semibold text-xl mb-4">오늘 일기</h2>
+    {(() => {
+      const completedTasks = todayDiaryLogs[selectedDay] || [];
+      if (completedTasks.length < 5) return null;
+      const idx = fullDays.indexOf(selectedDay);
+      const diaryDateStr = formatDiaryDate(selectedDay, currentDate, idx);
+      const summary = diarySummariesAI[selectedDay] || warmSummary(completedTasks);
+      const imageUrl = diaryImagesAI[selectedDay];
+      return (
+        <div key={selectedDay} className="mb-6">
+          <h3 className="font-semibold">{diaryDateStr}</h3>
+          <p className="mb-2 whitespace-pre-line">{summary}</p>
 
+          {imageUrl && (
+            <div
+              className="mt-2 w-full rounded overflow-hidden"
+              style={{ position: "relative", width: "100%", paddingTop: "75%" }} // 4:3 비율
+            >
+              <Image
+                src={imageUrl}
+                alt="오늘의 다이어리 일러스트"
+                fill                    // 부모 컨테이너를 꽉 채움
+                style={{ objectFit: "cover" }}
+                sizes="100vw"           // 반응형 대응
+                priority                // LCP 최적화
+              />
             </div>
           )}
-        </>
-      )}
-    </div>
-  );
-}
+        </div>
+      );
+    })()}
+  </div>
+)}
