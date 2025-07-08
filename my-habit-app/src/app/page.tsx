@@ -298,18 +298,38 @@ export default function Page() {
     setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000));
   };
 
-  const today = new Date(currentDate);
-  const dayIdx = fullDays.indexOf(selectedDay);
-  // 이번 주의 selectedDay 실제 날짜 계산
-  const realDate = new Date(today);
-  realDate.setDate(
-    today.getDate() - today.getDay() + (dayIdx + 1)
-  );
-  const isoDate = realDate.toISOString().split("T")[0];
-  setRoutines(prev => [
-    ...prev,
-    { date: isoDate, day: selectedDay, done: false, rating: 0, ...newRoutine },
-  ]);
+
+  // ✏️ handleAddRoutine 함수 정의 (맨 위쪽 함수 목록 안에 넣어주세요)
+  const handleAddRoutine = () => {
+    if (!isLoggedIn) {
+      alert("로그인 후 이용해주세요.");
+      return;
+    }
+    if (!newRoutine.task.trim()) return;
+
+    // 1) 오늘 날짜 중 선택된 요일 실제 날짜 계산
+    const today = new Date(currentDate);
+    const dayIdx = fullDays.indexOf(selectedDay); // 0=월...6=일
+    const realDate = new Date(today);
+    realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
+    const isoDate = realDate.toISOString().split("T")[0];
+
+    // 2) routines에 date 필드 포함해서 추가
+    setRoutines(prev => [
+      ...prev,
+      {
+        date: isoDate,
+        day: selectedDay,
+        start: newRoutine.start,
+        end: newRoutine.end,
+        task: newRoutine.task,
+        done: false,
+        rating: 0,
+        isHabit: false,
+      },
+    ]);
+
+    // 3) 입력 필드 초기화
     setNewRoutine({ start: "08:00", end: "09:00", task: "" });
   };
 
@@ -487,16 +507,23 @@ Content: ${promptBase}
         if (diarySummariesAI[day] && !diaryImagesAI[day] && !loadingAI[day]) {
           setLoadingAI((prev) => ({ ...prev, [day]: true }));
         // CONTENT에 최고 만족 행동 묘사
+        // ★ 여기서 topTasks를 다시 계산
+        const doneEntries = routines.filter(r => r.day === day && r.done);
+        const maxRating = doneEntries.length
+          ? Math.max(...doneEntries.map(r => r.rating))
+          : 0;
+        const topTasks = doneEntries
+          .filter(r => r.rating === maxRating)
+          .map(r => r.task);
         const promptBase = `오늘 만족도가 가장 높았던 행동: ${topTasks.join(", ")}`;
-        const imageUrl = await generateImageAI(promptBase);
-          if (imageUrl) {
+        const imageUrl = await generateImageAI(promptBase);          if (imageUrl) {
             setDiaryImagesAI((prev) => ({ ...prev, [day]: imageUrl }));
           }
           setLoadingAI((prev) => ({ ...prev, [day]: false }));
         }
       }
     })();
-  }, [diarySummariesAI, diaryImagesAI, loadingAI]);
+  }, [diarySummariesAI, diaryImagesAI, loadingAI, routines]);  // routines 추가
 
   useEffect(() => {
     if (selectedTab === "today-diary") {
@@ -673,7 +700,7 @@ Content: ${promptBase}
                   className="border rounded px-2 py-1"
                 />
                 <button
-                  onClick={handleAddRoutine}
+                  onClick={handleAddRoutine}  // handleAddRoutine 연결
                   className="rounded-full bg-black text-white py-2 mt-2 w-full font-semibold hover:bg-gray-800 transition"
                 >
                   추가
