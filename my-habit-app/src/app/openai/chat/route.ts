@@ -118,7 +118,8 @@ if (prompt && !prevTask && !nextTask) {
 ${prompt}
 
 이 중 특히 의미 있었던 순간과 그때 느낀 감정을 간결하게 담아,
-사용자의 노력을 진심으로 칭찬하며 따뜻하고 생동감 있는 일기 형식으로 짧게 요약해 주세요.`;
+사용자의 노력을 진심으로 칭찬하며 따뜻하고 생동감 있는 일기 형식으로 4줄 이내로 짧게 요약해 주세요.
+추가적으로, 문장의 끝이 모두 마무리 되도록 써주세요.`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
