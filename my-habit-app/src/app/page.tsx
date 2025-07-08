@@ -220,10 +220,11 @@ export default function Page() {
     }
   }, [todayDiaryLogs, diaryLogsKey, userId]);
 
-    const total = routines.filter((r) => r.day === day).length;
-    const done = routines.filter((r) => r.day === day && r.done).length;
-    return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
-  });
+    const completionData = fullDays.map((day) => {
+      const total = routines.filter(r => r.day === day).length;
+      const done  = routines.filter(r => r.day === day && r.done).length;
+      return { name: day, Completion: total ? Math.round((done / total) * 100) : 0 };
+    });
   
     const filtered = routines.filter((r) => r.day === day && r.done);
     const avg = filtered.length
