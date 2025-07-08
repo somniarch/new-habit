@@ -679,7 +679,10 @@ return (
               <div className="mt-6 space-y-4">
                 {routines
                   .filter((r) => r.day === selectedDay)
-                  .map((routine, idx, arr) => (
+                  .map((routine, idx, arr) => {
+                    // 전체 routines 배열에서 이 routine의 실제 인덱스
+                    const globalIdx = routines.indexOf(routine);
+
                     <React.Fragment key={`${routine.task}-${idx}`}>
                       <div
                         className="border rounded p-4 flex justify-between items-center"
@@ -695,8 +698,7 @@ return (
                           type="checkbox"
                           checked={routine.done}
                           onChange={() => {
-                            toggleDone(routines.indexOf(routine));
-                          }}
+                            onChange={() => toggleDone(globalIdx)}
                         />
                       </div>
                       {routine.done && (
@@ -707,7 +709,7 @@ return (
                               className={`px-2 rounded ${
                                 routine.rating === n + 1 ? "bg-black text-white" : "bg-gray-300 text-black"
                               }`}
-                              onClick={() => setRating(routines.indexOf(routine), n + 1)}
+                              onClick={() => setRating(globalIdx, n + 1)}
                             >
                               {n + 1}
                             </button>
@@ -716,7 +718,7 @@ return (
                       )}
                       {idx < arr.length - 1 && arr.length > 1 && (
                         <>
-                          {habitSuggestionIdx === idx ? (
+                          {habitSuggestionIdx === globalIdx ? (
                             <div className="p-3 bg-blue-50 rounded space-y-2 relative">
                               <button
                                 onClick={() => {
@@ -755,7 +757,7 @@ return (
                           ) : (
                             <div className="text-center my-2">
                               <button
-                                onClick={() => handleFetchHabitSuggestions(idx)}
+                                onClick={() => handleFetchHabitSuggestions(globalIdx)}>
                                 className="rounded-full bg-gray-300 px-3 py-1 hover:bg-gray-400"
                                 aria-label="습관 추천 열기"
                               >
