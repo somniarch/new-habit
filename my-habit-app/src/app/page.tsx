@@ -175,49 +175,41 @@ const handleLogin = async () => {
 
 const handleLogout = () => signOut();
 
-return (
-  <div>
-    {!isLoggedIn ? (
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          handleLogin();
-        }}
-      >
-        <input
-          type="text"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="ID"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          placeholder="PW"
-          required
-        />
-        <button type="submit">
-          로그인
-        </button>
-        {authError && <p style={{ color: "red" }}>{authError}</p>}
-      </form>
-    ) : (
-      <div>
-        <div>안녕하세요, {session?.user?.email}님</div>
-        {isAdmin && (
-          <div style={{ color: "green", fontWeight: "bold" }}>
-            [관리자 모드]
-          </div>
-        )}
-        <button onClick={handleLogout}>
-          로그아웃
-        </button>
-      </div>
-    )}
-  </div>
-);  // 수정: 사용자 등록 전용 함수로 분리
+ return (
+    <div>
+      {!isLoggedIn ? (
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleLogin();
+          }}
+        >
+          <input
+            type="text"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="ID"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="PW"
+            required
+          />
+          <button type="submit">로그인</button>
+          {authError && <p style={{ color: "red" }}>{authError}</p>}
+        </form>
+      ) : (
+        <div>
+          <div>안녕하세요, {session?.user?.email}님</div>
+          <button onClick={handleLogout}>로그아웃</button>
+        </div>
+      )}
+    </div>
+  );
+}
  
   
 
