@@ -1,40 +1,38 @@
-// pages/api/routines.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
-import { prisma } from "../../lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getSession({ req });
-  if (!session?.user?.id) return res.status(401).end();
-
-  const userId = session.user.id as string;
-
-  if (req.method === "GET") {
-    const routines = await prisma.routine.findMany({
-      where: { userId },
-      orderBy: { date: "asc" },
-    });
-    return res.status(200).json(routines);
-  }
-
-  if (req.method === "POST") {
-    const { date, day, start, end, task, done, rating, isHabit } = req.body;
-    const created = await prisma.routine.create({
-      data: {
-        userId,
-        date,
-        day,
-        start,
-        end,
-        task,
-        done: Boolean(done),
-        rating: Number(rating),
-        isHabit: Boolean(isHabit),
-      },
-    });
-    return res.status(201).json(created);
-  }
-
-  // PATCH, DELETE 등 필요 시 추가 구현
-  return res.status(405).end();
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({}, { status: 401 });
+  const userId = session.user.id;
+  const routines = await prisma.routine.findMany({
+    where: { userId },
+    orderBy: { date: "asc" },
+  });
+  return NextResponse.json(routines);
 }
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({}, { status: 401 });
+  const userId = session.user.id;
+  const body = await req.json();
+  const { date, day, start, end, task, done, rating, isHabit } = body;
+  const created = await prisma.routine.create({
+    data: {
+      userId,
+      date,
+      day,
+      start,
+      end,
+      task,
+      done: Boolean(done),
+      rating: Number(rating),
+      isHabit: Boolean(isHabit),
+    },
+  });
+  return NextResponse.json(created, { status: 201 });
+}
+
