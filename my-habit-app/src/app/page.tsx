@@ -223,8 +223,7 @@ return (
    // 날짜 계산 등 모두 함수 안에서!
  
   // ① 선택된 요일의 실제 날짜 계산 (YYYY-MM-DD)
-  const today = new Date(currentDate);
-  const dayIdx = fullDays.indexOf(selectedDay);       // 월=0 … 일=6
+  const today = new Date(currentDate);      // 월=0 … 일=6
   const realDate = new Date(today);
   realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
   const isoDate = realDate.toISOString().split("T")[0];
@@ -298,8 +297,7 @@ const handleExportCSV = () => {
      return;
    }
    if (!newRoutine.task.trim()) return;
-   const today = new Date(currentDate);
-   const dayIdx = fullDays.indexOf(selectedDay);
+  
    const realDate = new Date(today);
    realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
    const isoDate = realDate.toISOString().split("T")[0];
@@ -785,7 +783,7 @@ return (
               오늘 일기
             </h2>
             {(() => {
-              const dayIdx = fullDays.indexOf(selectedDay);
+             
               const d = new Date(currentDate);
               d.setDate(
                 currentDate.getDate() -
