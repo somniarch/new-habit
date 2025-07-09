@@ -175,44 +175,6 @@ const handleLogin = async () => {
 
 const handleLogout = () => signOut();
 
- return (
-    <div>
-      {!isLoggedIn ? (
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            handleLogin();
-          }}
-        >
-          <input
-            type="text"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="ID"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="PW"
-            required
-          />
-          <button type="submit">로그인</button>
-          {authError && <p style={{ color: "red" }}>{authError}</p>}
-        </form>
-      ) : (
-        <div>
-          <div>안녕하세요, {session?.user?.email}님</div>
-          <button onClick={handleLogout}>로그아웃</button>
-        </div>
-      )}
-    </div>
-  );
-}
- 
-  
-
 
    // ✅ Page 함수 최상단에 단 한 번만 선언!
  const addHabitBetween = async (idx: number, habit: string) => {
@@ -543,40 +505,41 @@ useEffect(() => {
   // JSX 리턴 시작 (로그인 분기)
   // ──────────────────────────────────────────────────────────────
 return (
-  <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
-    {/* 토스트 메시지 */}
-    {toast && (
-      <Toast
-        emoji={toast.emoji}
-        message={toast.message}
-        onClose={() => setToast(null)}
-      />
-    )}
-
-    {/* 로그인 전 */}
-   {!isLoggedIn ? (
-   <div className="auth-form max-w-sm mx-auto p-6 mt-20 border rounded space-y-4">
-     <button
-       onClick={() => signIn()}   // NextAuth의 signIn만 사용!
-       className="w-full py-2 bg-black text-white rounded"
-     >
-       로그인
-     </button>
-      {authError && (<p style={{ color: "red" }}>{authError}</p>)}
-   </div>
- ) : (
-     {/* 로그인 후 헤더 */}
-     <div className="flex justify-end gap-2">
-       <span className="text-sm text-gray-600">
-         안녕하세요, {session?.user?.email}님
-       </span>
-       <button
-         onClick={() => signOut()}  // NextAuth의 signOut만 사용!
-         className="text-red-600 underline text-sm"
-       >
-         로그아웃
-       </button>
-     </div>
+    <div>
+      {!isLoggedIn ? (
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleLogin();
+          }}
+        >
+          <input
+            type="text"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="ID"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="PW"
+            required
+          />
+          <button type="submit">로그인</button>
+          {authError && <p style={{ color: "red" }}>{authError}</p>}
+        </form>
+      ) : (
+        <div>
+          <div>안녕하세요, {session?.user?.email}님</div>
+          <button onClick={handleLogout}>로그아웃</button>
+        </div>
+      )}
+    </div>
+  );
+}
+ 
 
         {/* 관리자 모드 */}
         {isAdmin && (
