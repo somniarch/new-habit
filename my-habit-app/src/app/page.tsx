@@ -189,9 +189,9 @@ return (
   
 
 
-   const addHabitBetween = async (idx: number, habit: string) => {
+   // ✅ Page 함수 최상단에 단 한 번만 선언!
+ const addHabitBetween = async (idx: number, habit: string) => {
    if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
-   // 날짜 계산 등 모두 함수 안에서!
    const today = new Date(currentDate);
    const dayIdx = fullDays.indexOf(selectedDay);
    const realDate = new Date(today);
@@ -210,7 +210,7 @@ return (
    const updated = [
      ...routines.slice(0, idx + 1),
      habitRoutine,
-     ...routines.slice(idx + 1)
+     ...routines.slice(idx + 1),
    ];
    await fetch('/api/routines', {
      method: 'PUT',
@@ -220,6 +220,8 @@ return (
    reloadRoutines();
    setHabitSuggestionIdx(null);
  }
+   // 날짜 계산 등 모두 함수 안에서!
+ 
   // ① 선택된 요일의 실제 날짜 계산 (YYYY-MM-DD)
   const today = new Date(currentDate);
   const dayIdx = fullDays.indexOf(selectedDay);       // 월=0 … 일=6
@@ -291,15 +293,16 @@ const handleExportCSV = () => {
 
   // ✏️ handleAddRoutine 함수 정의 (맨 위쪽 함수 목록 안에 넣어주세요)
    const handleAddRoutine = async () => {
-   if (!isLoggedIn) { ... }
+   if (!isLoggedIn) {
+     alert("로그인 후 이용해주세요.");
+     return;
+   }
    if (!newRoutine.task.trim()) return;
-   // 1) 오늘 날짜 중 선택된 요일 실제 날짜 계산
    const today = new Date(currentDate);
    const dayIdx = fullDays.indexOf(selectedDay);
    const realDate = new Date(today);
    realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
    const isoDate = realDate.toISOString().split("T")[0];
-   // 2) routines에 date 필드 포함해서 추가
    const newRoutineObj = {
      date: isoDate,
      day: selectedDay,
@@ -319,37 +322,9 @@ const handleExportCSV = () => {
    setNewRoutine({ start: "08:00", end: "09:00", task: "" });
  }
 
-    // 1) 오늘 날짜 중 선택된 요일 실제 날짜 계산
-    const today = new Date(currentDate);
-    const dayIdx = fullDays.indexOf(selectedDay); // 0=월...6=일
-    const realDate = new Date(today);
-    realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
-    const isoDate = realDate.toISOString().split("T")[0];
+    
 
-    // 2) routines에 date 필드 포함해서 추가
-    const newRoutineObj = {
-   date: isoDate,
-   day: selectedDay,
-   start: newRoutine.start,
-   end: newRoutine.end,
-   task: newRoutine.task,
-   done: false,
-   rating: 0,
-   isHabit: false,
- };
- await fetch('/api/routines', {
-   method: 'PUT', // 또는 'POST', 'PATCH' 등
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ routines: updated }),
- });
- reloadRoutines();
- }
-
-    // 3) 입력 필드 초기화
-    setNewRoutine({ start: "08:00", end: "09:00", task: "" });
-  };
-
-   const toggleDone = async (idx: number) => {
+ const toggleDone = async (idx: number) => {
    if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
    const updated = [...routines];
    updated[idx] = { ...updated[idx], done: !updated[idx].done };
@@ -377,11 +352,11 @@ const handleExportCSV = () => {
     });
   };
 
-  const setRating = async (idx: number, rating: number) => {
-    if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
-    const updated = [...routines];
- updated[idx] = { ...updated[idx], done: !updated[idx].done };
-    await fetch('/api/routines', {
+   const setRating = async (idx: number, rating: number) => {
+   if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
+   const updated = [...routines];
+   updated[idx] = { ...updated[idx], rating };
+   await fetch('/api/routines', {
      method: 'PATCH',
      headers: { 'Content-Type': 'application/json' },
      body: JSON.stringify({ routines: updated }),
