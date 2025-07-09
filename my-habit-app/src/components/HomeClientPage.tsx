@@ -22,8 +22,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "your-admin@email.com";
-const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW || "your-admin-password";
+
 
 const habitCandidates = ["깊은 숨 2분", "물 한잔", "짧은 산책", "스트레칭"];
 const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
@@ -77,8 +76,8 @@ function warmSummary(entries: string[]) {
 
 export default function HomeClientPage() {
   const { data: session, status } = useSession();
-  const isAdmin = session?.user?.role === "admin";
   const isLoggedIn = status === "authenticated";
+  const userEmail = session?.user?.email || "";
   const [selectedTab, setSelectedTab] = useState<"routine-habit" | "tracker" | "today-diary">("routine-habit");
   const [newRoutine, setNewRoutine] = useState({ start: "08:00", end: "09:00", task: "" });
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
@@ -101,14 +100,17 @@ export default function HomeClientPage() {
 
 
   // 2. 함수 선언(핸들러 등) - "실행"하는 코드 넣으면 안 됨
-  const handleLogin = async () => {
+ const handleLogin = async (e) => {
+    e.preventDefault();
     setAuthError("");
+    setLoginLoading(true);
     const res = await signIn("credentials", {
       redirect: false,
       email,
       password,
     });
-    if (res?.error) setAuthError(" 실패: " + res.error);
+    setLoginLoading(false);
+    if (res?.error) setAuthError("로그인 실패: " + res.error);
   };
 
   const handleLogout = () => signOut();
