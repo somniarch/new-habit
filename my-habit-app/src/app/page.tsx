@@ -411,7 +411,16 @@ useEffect(() => {
   // JSX 리턴 시작 (로그인 분기)
   // ──────────────────────────────────────────────────────────────
 return (
-  <div>
+<div>
+    {/* 1. 토스트(Toast) 알림 추가 */}
+    {toast && (
+      <div className="fixed bottom-8 right-8 bg-black text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 z-50">
+        <span>{toast.emoji}</span>
+        <span>{toast.message}</span>
+      </div>
+    )}
+
+<div>
     {!isLoggedIn ? (
       <form
         onSubmit={e => {
