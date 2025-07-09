@@ -16,9 +16,10 @@ export default function Login({ onLogin }: { onLogin: (userId: string, isAdmin: 
       return;
     }
 
+    const payload = { userId, password };
     const res = await fetch("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ userId, password }),
+      body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
     });
 
@@ -44,13 +45,3 @@ export default function Login({ onLogin }: { onLogin: (userId: string, isAdmin: 
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="w-full border rounded p-2"
-      />
-      <button onClick={handleSubmit} className="w-full bg-blue-600 text-white py-2 rounded">
-        로그인
-      </button>
-      {error && <p className="text-red-600">{error}</p>}
-    </div>
-  );
-}
-
