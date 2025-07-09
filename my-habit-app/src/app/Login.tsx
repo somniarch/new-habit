@@ -53,3 +53,4 @@ export default function Login({ onLogin }: { onLogin: (userId: string, isAdmin: 
     </div>
   );
 }
+
