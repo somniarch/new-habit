@@ -1,5 +1,5 @@
 'use client';
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
 import { signIn, signOut, useSession } from "next-auth/react";
