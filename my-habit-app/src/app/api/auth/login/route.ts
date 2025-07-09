@@ -1,9 +1,10 @@
 // my-habit-app/src/app/api/auth/login/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   const { id, password } = await request.json();
@@ -12,15 +13,8 @@ export async function POST(request: NextRequest) {
   const user = await prisma.user.findUnique({ where: { id } });
 
   // 유저 없거나 비밀번호 다르면 실패
-  if (!user) {
-    return NextResponse.json(
-      { success: false, message: "Invalid credentials" },
-      { status: 401 }
-    );
-  }
-
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) {
+  const isValid = user ? await bcrypt.compare(password, user.password) : false;
+  if (!user || !isValid) {
     return NextResponse.json(
       { success: false, message: "Invalid credentials" },
       { status: 401 }
@@ -28,5 +22,5 @@ export async function POST(request: NextRequest) {
   }
 
   // 성공 응답
-  return NextResponse.json({ success: true, userId: user.id });
+  return NextResponse.json({ success: true, id: user.id });
 }
