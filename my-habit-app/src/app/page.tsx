@@ -419,8 +419,6 @@ return (
         <span>{toast.message}</span>
       </div>
     )}
-
-<div>
     {!isLoggedIn ? (
       <form
         onSubmit={e => {
