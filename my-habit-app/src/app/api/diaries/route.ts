@@ -1,30 +1,28 @@
-// pages/api/diaries.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
-import { prisma } from "../../lib/prisma";
+// src/app/api/diaries/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-export async function GET/POST
-  const session = await getSession({ req });
-  if (!session?.user?.id) return res.status(401).end();
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({}, { status: 401 });
+  const userId = session.user.id;
+  const diaries = await prisma.diary.findMany({
+    where: { userId },
+    orderBy: { date: "asc" },
+  });
+  return NextResponse.json(diaries);
+}
 
-  const userId = session.user.id as string;
-
-  if (req.method === "GET") {
-    const diaries = await prisma.diary.findMany({
-      where: { userId },
-      orderBy: { date: "asc" },
-    });
-    return res.status(200).json(diaries);
-  }
-
-  if (req.method === "POST") {
-    const { date, summary, imageUrl } = req.body;
-    const diary = await prisma.diary.create({
-      data: { userId, date, summary, imageUrl },
-    });
-    return res.status(201).json(diary);
-  }
-
-  // PUT, DELETE 등 필요 시 추가 구현
-  return res.status(405).end();
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({}, { status: 401 });
+  const userId = session.user.id;
+  const body = await req.json();
+  const { date, summary, imageUrl } = body;
+  const diary = await prisma.diary.create({
+    data: { userId, date, summary, imageUrl },
+  });
+  return NextResponse.json(diary, { status: 201 });
 }
