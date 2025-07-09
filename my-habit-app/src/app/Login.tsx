@@ -45,3 +45,16 @@ export default function Login({ onLogin }: { onLogin: (userId: string, isAdmin: 
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        className="w-full border rounded p-2"
+      />
+      {error && <div className="text-red-500">{error}</div>}
+      <button
+        className="w-full bg-blue-500 text-white p-2 rounded"
+        onClick={handleSubmit}
+        type="button"
+      >
+        로그인
+      </button>
+    </div>
+  );
+}
