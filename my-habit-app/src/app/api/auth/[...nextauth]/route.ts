@@ -1,11 +1,16 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma"; // 본인 경로에 맞게!
-import bcrypt from "bcrypt";
+import { createClient } from "@supabase/supabase-js";
+import bcrypt from "bcryptjs";
+
+// Supabase client 생성
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const handler = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // - adapter: PrismaAdapter(prisma), // 삭제!
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({
@@ -16,11 +21,14 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials) return null;
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-        if (!user) return null;
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        // Supabase에서 admins 테이블 조회!
+        const { data: user, error } = await supabase
+          .from("admins")
+          .select("*")
+          .eq("email", credentials.email)
+          .single();
+        if (error || !user) return null;
+        const isValid = await bcrypt.compare(credentials.password, user.password_hash);
         if (!isValid) return null;
         return { id: user.id, email: user.email };
       },
@@ -32,13 +40,12 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      // 타입 확장(global.d.ts or next-auth.d.ts) 했다면 any 없이 아래처럼!
       if (token.sub && session.user) session.user.id = token.sub as string;
       return session;
     },
   },
   pages: {
-    signIn: "/login", // 커스텀 로그인 페이지 (옵션)
+    signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
