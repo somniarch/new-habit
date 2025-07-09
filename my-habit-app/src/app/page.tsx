@@ -165,59 +165,6 @@ export default function Page() {
   };
 
 
-const handleLogout = () => signOut();
-
-
-   // ✅ Page 함수 최상단에 단 한 번만 선언!
- const addHabitBetween = async (idx: number, habit: string) => {
-   if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
-   const today = new Date(currentDate);
-   const dayIdx = fullDays.indexOf(selectedDay);
-   const realDate = new Date(today);
-   realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
-   const isoDate = realDate.toISOString().split("T")[0];
-   const habitRoutine: Routine = {
-     date: isoDate,
-     day: selectedDay,
-     start: "(습관)",
-     end: "",
-     task: habit,
-     done: false,
-     rating: 0,
-     isHabit: true,
-   };
-   const updated = [
-     ...routines.slice(0, idx + 1),
-     habitRoutine,
-     ...routines.slice(idx + 1),
-   ];
-   await fetch('/api/routines', {
-     method: 'PUT',
-     headers: { 'Content-Type': 'application/json' },
-     body: JSON.stringify({ routines: updated }),
-   });
-   reloadRoutines();
-   setHabitSuggestionIdx(null);
- }
-   // 날짜 계산 등 모두 함수 안에서!
- 
-  // ① 선택된 요일의 실제 날짜 계산 (YYYY-MM-DD)
-  const today = new Date(currentDate);      // 월=0 … 일=6
-  const realDate = new Date(today);
-  realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
-  const isoDate = realDate.toISOString().split("T")[0];
-
-  // ② date 필드를 포함한 habitRoutine 생성
-  const habitRoutine: Routine = {
-    date: isoDate,
-    day: selectedDay,
-    start: "(습관)",
-    end: "",
-    task: habit,
-    done: false,
-    rating: 0,
-    isHabit: true,
-  };
 
 
 
@@ -270,27 +217,6 @@ const handleExportCSV = () => {
    }
    if (!newRoutine.task.trim()) return;
   
-   const realDate = new Date(today);
-   realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
-   const isoDate = realDate.toISOString().split("T")[0];
-   const newRoutineObj = {
-     date: isoDate,
-     day: selectedDay,
-     start: newRoutine.start,
-     end: newRoutine.end,
-     task: newRoutine.task,
-     done: false,
-     rating: 0,
-     isHabit: false,
-   };
-   await fetch('/api/routines', {
-     method: 'POST',
-     headers: { 'Content-Type': 'application/json' },
-     body: JSON.stringify(newRoutineObj),
-   });
-   reloadRoutines();
-   setNewRoutine({ start: "08:00", end: "09:00", task: "" });
- }
 
     
 
