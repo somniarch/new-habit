@@ -96,8 +96,8 @@ export default function HomeClientPage() {
 
 
   // 2. 함수 선언(핸들러 등) - "실행"하는 코드 넣으면 안 됨
- const handleLogin = async (e) => {
-    e.preventDefault();
+const handleLogin: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  e.preventDefault();
     setAuthError("");
     setLoginLoading(true);
     const res = await signIn("credentials", {
