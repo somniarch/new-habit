@@ -5,6 +5,7 @@ import Image from "next/image";
 import WeeklySummary from "@/components/ui/WeeklySummary";
 import { signIn, signOut, useSession } from "next-auth/react";
 import useSWR from "swr";
+
 type Routine = {
   date: string; 
   day: string;
@@ -49,8 +50,6 @@ function getEncouragementAndHabit(task: string) {
   };
 }
 
-
-
 function formatDiaryDate(day: string, baseDate: Date, dayIndex: number) {
   const firstDayOfWeek = new Date(baseDate);
   firstDayOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + dayIndex + 1);
@@ -66,10 +65,7 @@ function warmSummary(entries: string[]) {
   return `오늘 당신은 ${firstFive.join(", ")} 등 다양한 일과를 멋지게 해냈어요.\n작은 습관 하나하나가 큰 변화를 만들어가고 있답니다.\n이 페이스를 유지하며 행복한 하루하루 보내길 응원할게요!`;
 }
 
-
-
-export default function Page() {
-  // 1. 상태 선언 (useState 등)
+export default function HomeClientPage() {
   const { data: session, status } = useSession();
   const isAdmin = session?.user?.role === "admin";
   const isLoggedIn = status === "authenticated";
