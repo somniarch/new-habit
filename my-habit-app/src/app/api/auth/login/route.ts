@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function POST(request: Request) {
+export async function GET/POST
   const { userId, password } = await request.json();
 
   const user = await prisma.user.findUnique({ where: { userId } });
