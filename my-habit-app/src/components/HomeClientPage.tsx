@@ -93,6 +93,8 @@ export default function HomeClientPage() {
   const [authError, setAuthError] = useState("");
   const [selectedDay, setSelectedDay] = useState(fullDays[0]);
   const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+
 
 
   // 2. 함수 선언(핸들러 등) - "실행"하는 코드 넣으면 안 됨
