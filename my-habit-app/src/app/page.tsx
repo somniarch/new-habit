@@ -505,48 +505,41 @@ useEffect(() => {
   // JSX 리턴 시작 (로그인 분기)
   // ──────────────────────────────────────────────────────────────
 return (
-    <div>
-      {!isLoggedIn ? (
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            handleLogin();
-          }}
-        >
-          <input
-            type="text"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="ID"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="PW"
-            required
-          />
-          <button type="submit">로그인</button>
-          {authError && <p style={{ color: "red" }}>{authError}</p>}
-        </form>
-      ) : (
-        <div>
-          <div>안녕하세요, {session?.user?.email}님</div>
-          <button onClick={handleLogout}>로그아웃</button>
-        </div>
-      )}
-    </div>
-  );
-}
- 
-
-        {/* 관리자 모드 */}
+  <div>
+    {!isLoggedIn ? (
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          handleLogin();
+        }}
+      >
+        <input
+          type="text"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="ID"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="PW"
+          required
+        />
+        <button type="submit">로그인</button>
+        {authError && <p style={{ color: "red" }}>{authError}</p>}
+      </form>
+    ) : (
+      <div>
+        <div>안녕하세요, {session?.user?.email}님</div>
+        {/* 관리자 모드 버튼은 로그인 영역 안에서 조건부로! */}
         {isAdmin && (
           <button className="mb-4 px-4 py-2 bg-red-600 text-white rounded font-semibold">
             관리자 모드
           </button>
         )}
+        <button onClick={handleLogout}>로그아웃</button>
 
         {/* 탭 네비게이션 */}
         <div className="flex justify-center gap-4 mt-4">
