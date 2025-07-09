@@ -189,8 +189,16 @@ return (
   
 
 
-  const addHabitBetween = (idx: number, habit: string) => {
+  const addHabitBetween = async (idx: number, habit: string) => {
     if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
+   await fetch('/api/routines', {
+     method: 'PUT',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ routines: updated }),
+   });
+   reloadRoutines();
+   setHabitSuggestionIdx(null);
+ }
   // ① 선택된 요일의 실제 날짜 계산 (YYYY-MM-DD)
   const today = new Date(currentDate);
   const dayIdx = fullDays.indexOf(selectedDay);       // 월=0 … 일=6
@@ -210,13 +218,14 @@ return (
     isHabit: true,
   };
  const updated = [...routines.slice(0, idx + 1), habitRoutine, ...routines.slice(idx + 1)];
-await fetch('/api/routines', {
+  await fetch('/api/routines', {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ routines: updated }),
 });
-reloadRoutines(); // 최신화
-setHabitSuggestionIdx(null);
+  reloadRoutines();
+  setHabitSuggestionIdx(null);
+
 
 
 // CSV 다운로드 함수
@@ -266,6 +275,14 @@ const handleExportCSV = () => {
       return;
     }
     if (!newRoutine.task.trim()) return;
+   await fetch('/api/routines', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify(newRoutineObj),
+   });
+   reloadRoutines();
+   setNewRoutine({ start: "08:00", end: "09:00", task: "" });
+ }
 
     // 1) 오늘 날짜 중 선택된 요일 실제 날짜 계산
     const today = new Date(currentDate);
@@ -285,10 +302,10 @@ const handleExportCSV = () => {
    rating: 0,
    isHabit: false,
  };
- await fetch('/api/routines', ...);
-   method: 'POST',
+ await fetch('/api/routines', {
+   method: 'PUT', // 또는 'POST', 'PATCH' 등
    headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify(newRoutineObj),
+   body: JSON.stringify({ routines: updated }),
  });
  reloadRoutines();
  }
@@ -321,17 +338,17 @@ const handleExportCSV = () => {
     });
   };
 
-  const setRating = (idx: number, rating: number) => {
+  const setRating = async (idx: number, rating: number) => {
     if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
     const updated = [...routines];
  updated[idx] = { ...updated[idx], done: !updated[idx].done };
- await fetch('/api/routines', {
-   method: 'PATCH',
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ routines: updated }),
- });
- reloadRoutines();
-  };
+    await fetch('/api/routines', {
+     method: 'PATCH',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ routines: updated }),
+   });
+   reloadRoutines();
+ }
 
     async function fetchHabitSuggestions(
   prevTask: string | null,
@@ -514,9 +531,7 @@ return (
      >
        로그인
      </button>
-     {loginError && (
-       <p className="text-red-600 text-sm">{loginError}</p>
-     )}
+      {authError && (<p style={{ color: "red" }}>{authError}</p>)}
    </div>
  ) : (
      {/* 로그인 후 헤더 */}
