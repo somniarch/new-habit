@@ -111,6 +111,7 @@ export default function Page() {
   const { data: routines = [], mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
   const { data: diaries } = useSWR<any[]>("/api/diaries", fetcher);
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
+  const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
   const [generated5, setGenerated5] = useState<Record<string, boolean>>({});
   const [generated10, setGenerated10] = useState<Record<string, boolean>>({});
@@ -698,7 +699,7 @@ return (
               오늘 일기
             </h2>
             {(() => {
-             
+              // "계산/분기"만 OK (훅 선언 X)
               const dayIdx = fullDays.indexOf(selectedDay);
               const d = new Date(currentDate);
               d.setDate(
@@ -717,12 +718,7 @@ return (
                 currentDate,
                 dayIdx
               );
-//추가 함수
-             
-
-              const summary =
-                diarySummariesAI[iso] ||
-                warmSummary(completedTasks);
+              const summary = diarySummariesAI[iso] || warmSummary(completedTasks);
               const imageUrl = diaryImagesAI[iso];
               return (
                 <div key={selectedDay} className="mb-6">
@@ -747,6 +743,7 @@ return (
             })()}
           </div>
         )}
+
       </>
     )}
   </div>
