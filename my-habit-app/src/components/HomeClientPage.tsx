@@ -5,7 +5,6 @@ import Image from "next/image";
 import WeeklySummary from "@/components/ui/WeeklySummary";
 import { signIn, signOut, useSession } from "next-auth/react";
 import useSWR from "swr";
-import HomeClientPage from "@/components/HomeClientPage";
 type Routine = {
   date: string; 
   day: string;
