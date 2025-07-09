@@ -96,6 +96,7 @@ function formatMonthDay(date: Date, dayIndex: number) {
 
 export default function Page() {
   // 1. 상태 선언 (useState 등)
+  const isAdmin = session?.user?.role === "admin";
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
   const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
@@ -758,6 +759,7 @@ return (
             </h2>
             {(() => {
              
+              const dayIdx = fullDays.indexOf(selectedDay);
               const d = new Date(currentDate);
               d.setDate(
                 currentDate.getDate() -
