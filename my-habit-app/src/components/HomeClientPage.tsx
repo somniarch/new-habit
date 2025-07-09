@@ -417,60 +417,60 @@ useEffect(() => {
   // JSX 리턴 시작 (로그인 분기)
   // ──────────────────────────────────────────────────────────────
 return (
-<div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
-      {toast && (
-        <div className="fixed bottom-8 right-8 bg-black text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 z-50">
-          <span>{toast.emoji}</span>
-          <span>{toast.message}</span>
-        </div>
-      )}
+  <div className="max-w-xl mx-auto p-6 space-y-6 font-sans relative min-h-screen pb-8">
+    {toast && (
+      <div className="fixed bottom-8 right-8 bg-black text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 z-50">
+        <span>{toast.emoji}</span>
+        <span>{toast.message}</span>
+      </div>
+    )}
 
-      {!isLoggedIn ? (
-        <form
-          onSubmit={handleLogin}
-          className="bg-white rounded-xl shadow-lg p-8 w-full max-w-sm space-y-4 mx-auto mt-24"
+    {!isLoggedIn ? (
+      <form
+        onSubmit={handleLogin}
+        className="bg-white rounded-xl shadow-lg p-8 w-full max-w-sm space-y-4 mx-auto mt-24"
+      >
+        <h2 className="text-2xl font-bold mb-4 text-center text-gray-900">관리자 로그인</h2>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="이메일"
+          autoComplete="username"
+          required
+          className="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="비밀번호"
+          autoComplete="current-password"
+          required
+          className="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300"
+        />
+        <button
+          type="submit"
+          disabled={loginLoading}
+          className="w-full mt-4 bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition"
         >
-          <h2 className="text-2xl font-bold mb-4 text-center text-gray-900">관리자 로그인</h2>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="이메일"
-            autoComplete="username"
-            required
-            className="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300"
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="비밀번호"
-            autoComplete="current-password"
-            required
-            className="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300"
-          />
+          {loginLoading ? "로그인 중..." : "로그인"}
+        </button>
+        {authError && (
+          <div className="bg-red-50 text-red-600 text-center rounded px-3 py-2 mt-2">{authError}</div>
+        )}
+      </form>
+    ) : (
+      <div>
+        <div className="flex justify-end gap-2">
+          <span className="text-sm text-gray-600">안녕하세요, {userEmail}님</span>
           <button
-            type="submit"
-            disabled={loginLoading}
-            className="w-full mt-4 bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition"
+            onClick={handleLogout}
+            className="text-red-600 underline text-sm hover:text-red-800 transition"
           >
-            {loginLoading ? "로그인 중..." : "로그인"}
+            로그아웃
           </button>
-          {authError && (
-            <div className="bg-red-50 text-red-600 text-center rounded px-3 py-2 mt-2">{authError}</div>
-          )}
-        </form>
-      ) : (
-        <>
-          <div className="flex justify-end gap-2">
-            <span className="text-sm text-gray-600">안녕하세요, {userEmail}님</span>
-            <button
-              onClick={handleLogout}
-              className="text-red-600 underline text-sm hover:text-red-800 transition"
-            >
-              로그아웃
-            </button>
-          </div>
+        </div>
 
         {/* 탭 네비게이션 */}
         <div className="flex justify-center gap-4 mt-4">
@@ -505,20 +505,21 @@ return (
             오늘 일기
           </button>
         </div>
-	<div className="flex justify-center gap-2 mt-4">
-	  {fullDays.map((day) => (
-	    <button
-	      key={day}
-	      onClick={() => setSelectedDay(day)}
-	      className={`rounded-full px-4 py-1 font-semibold ${
-	        selectedDay === day ? "bg-black text-white" : "bg-gray-300 text-black"
-	      }`}
-	      aria-label={day}
-	    >
-	      {day}
-	    </button>
-	  ))}
-	</div>
+
+        <div className="flex justify-center gap-2 mt-4">
+          {fullDays.map((day) => (
+            <button
+              key={day}
+              onClick={() => setSelectedDay(day)}
+              className={`rounded-full px-4 py-1 font-semibold ${
+                selectedDay === day ? "bg-black text-white" : "bg-gray-300 text-black"
+              }`}
+              aria-label={day}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
 
         {/* 루틴 및 습관 탭 */}
         {selectedTab === 'routine-habit' && (
@@ -746,7 +747,8 @@ return (
             })()}
           </div>
         )}
-	</div>
+      </div>
     )}
   </div>
-);}
+);
+
