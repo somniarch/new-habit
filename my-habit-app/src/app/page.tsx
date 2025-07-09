@@ -126,12 +126,9 @@ function formatMonthDay(date: Date, dayIndex: number) {
 
 
   const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [authError, setAuthError] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
 
-const { data: session, status } = useSession();
-const isLoggedIn = status === "authenticated";
-const isAdmin = session?.user?.role === "admin"; // credentials provider에서 role 부여
 
 const handleLogin = async () => {
   setAuthError("");
