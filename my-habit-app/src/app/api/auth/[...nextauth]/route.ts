@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma"; // 본인 경로에 맞게!
 import bcrypt from "bcrypt";
@@ -32,7 +34,7 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-       if (token.sub && session.user) (session.user as any).id = token.sub as string;
+      if (token.sub && session.user) session.user.id = token.sub as string;
       return session;
     },
   },
