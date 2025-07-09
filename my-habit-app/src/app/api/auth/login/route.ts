@@ -6,10 +6,10 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
-  const { id, password } = await request.json();
+  const { userId, password } = await request.json();
 
   // DB에서 해당 유저 찾기
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
 
   // 유저 없거나 비밀번호 다르면 실패
   if (!user || user.password !== password) {
