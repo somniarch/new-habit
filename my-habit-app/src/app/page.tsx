@@ -111,7 +111,6 @@ export default function Page() {
   const { data: routines = [], mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
   const { data: diaries } = useSWR<any[]>("/api/diaries", fetcher);
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
-  const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
   const [generated5, setGenerated5] = useState<Record<string, boolean>>({});
   const [generated10, setGenerated10] = useState<Record<string, boolean>>({});
