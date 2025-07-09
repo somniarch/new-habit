@@ -2,7 +2,6 @@
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
 type Routine = {
@@ -18,7 +17,6 @@ type Routine = {
 
 const habitCandidates = ["깊은 숨 2분", "물 한잔", "짧은 산책", "스트레칭"];
 const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
-const dayLetters = fullDays.map((d) => d[0]);
 
 function getEncouragementAndHabit(task: string) {
   const lower = task.toLowerCase();
@@ -64,12 +62,6 @@ function Toast({ message, emoji, onClose }: { message: string; emoji: string; on
   );
 }
 
-function formatWeekLabel(date: Date, weekNum: number) {
-  const yy = String(date.getFullYear()).slice(2);
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yy}.${mm}.${dd}.W${weekNum}`;
-}
 
 function formatDiaryDate(day: string, baseDate: Date, dayIndex: number) {
   const firstDayOfWeek = new Date(baseDate);
@@ -86,30 +78,20 @@ function warmSummary(entries: string[]) {
   return `오늘 당신은 ${firstFive.join(", ")} 등 다양한 일과를 멋지게 해냈어요.\n작은 습관 하나하나가 큰 변화를 만들어가고 있답니다.\n이 페이스를 유지하며 행복한 하루하루 보내길 응원할게요!`;
 }
 
-function formatMonthDay(date: Date, dayIndex: number) {
-  const firstDayOfWeek = new Date(date);
-  firstDayOfWeek.setDate(date.getDate() - date.getDay() + dayIndex + 1);
-  const mm = String(firstDayOfWeek.getMonth() + 1).padStart(2, "0");
-  const dd = String(firstDayOfWeek.getDate()).padStart(2, "0");
-  return `${mm}/${dd}`;
-}
+
 
 export default function Page() {
   // 1. 상태 선언 (useState 등)
   const { data: session, status } = useSession();
   const isAdmin = session?.user?.role === "admin";
   const isLoggedIn = status === "authenticated";
-  const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [weekNum, setWeekNum] = useState(1);
-  const [selectedDay, setSelectedDay] = useState(fullDays[0]);
   const [selectedTab, setSelectedTab] = useState<"routine-habit" | "tracker" | "today-diary">("routine-habit");
   const [newRoutine, setNewRoutine] = useState({ start: "08:00", end: "09:00", task: "" });
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
   const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
   const fetcher = (url: string) => fetch(url).then(r => r.json());
   const { data: routines = [], mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
-  const { data: diaries } = useSWR<any[]>("/api/diaries", fetcher);
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
   const [generated5, setGenerated5] = useState<Record<string, boolean>>({});
@@ -200,14 +182,6 @@ const handleExportCSV = () => {
 
 
 
-  const handlePrevWeek = () => {
-    setWeekNum((w) => Math.max(1, w - 1));
-    setCurrentDate(new Date(currentDate.getTime() - 7 * 86400000));
-  };
-  const handleNextWeek = () => {
-    setWeekNum((w) => w + 1);
-    setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000));
-  };
 
 
   // ✏️ handleAddRoutine 함수 정의 (맨 위쪽 함수 목록 안에 넣어주세요)
