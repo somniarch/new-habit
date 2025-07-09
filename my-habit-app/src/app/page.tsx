@@ -106,6 +106,7 @@ export default function Page() {
   const [selectedTab, setSelectedTab] = useState<"routine-habit" | "tracker" | "today-diary">("routine-habit");
   const [newRoutine, setNewRoutine] = useState({ start: "08:00", end: "09:00", task: "" });
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
+  const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
   const fetcher = (url: string) => fetch(url).then(r => r.json());
   const { data: routines = [], mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
   const { data: diaries } = useSWR<any[]>("/api/diaries", fetcher);
@@ -717,7 +718,7 @@ return (
                 dayIdx
               );
 //추가 함수
-              const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
+             
 
               const summary =
                 diarySummariesAI[iso] ||
