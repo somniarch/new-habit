@@ -94,48 +94,74 @@ function formatMonthDay(date: Date, dayIndex: number) {
   return `${mm}/${dd}`;
 }
 
- export default function Page() {
-   const { data: session, status } = useSession();
-   const isLoggedIn = status === "authenticated";
-
+export default function Page() {
+  // 1. 상태 선언 (useState 등)
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === "authenticated";
   const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
-  
-
-
   const [currentDate, setCurrentDate] = useState(new Date());
   const [weekNum, setWeekNum] = useState(1);
   const [selectedDay, setSelectedDay] = useState(fullDays[0]);
   const [selectedTab, setSelectedTab] = useState<"routine-habit" | "tracker" | "today-diary">("routine-habit");
-
-
   const [newRoutine, setNewRoutine] = useState({ start: "08:00", end: "09:00", task: "" });
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
-  const fetcher = (url) => fetch(url).then(r => r.json());
-  const { data: routines, mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
+  const fetcher = (url: string) => fetch(url).then(r => r.json());
+  const { data: routines = [], mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
   const { data: diaries } = useSWR<any[]>("/api/diaries", fetcher);
-   // 로딩 상태: status === "loading" || routines===undefined
-
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
   const [generated5, setGenerated5] = useState<Record<string, boolean>>({});
   const [generated10, setGenerated10] = useState<Record<string, boolean>>({});
-
   const [aiHabitSuggestions, setAiHabitSuggestions] = useState<string[]>([]);
   const [aiHabitLoading, setAiHabitLoading] = useState(false);
   const [aiHabitError, setAiHabitError] = useState<string | null>(null);
-
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+
+  // 2. 함수 선언(핸들러 등) - "실행"하는 코드 넣으면 안 됨
+  const handleLogin = async () => {
+    setAuthError("");
+    const res = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    });
+    if (res?.error) setAuthError("로그인 실패: " + res.error);
+  };
+
+  const handleLogout = () => signOut();
+
   const addHabitBetween = async (idx: number, habit: string) => {
-  await fetch('/api/routines', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ routines: updated }),
-  });
+    if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
+    const today = new Date(currentDate);
+    const dayIdx = fullDays.indexOf(selectedDay);
+    const realDate = new Date(today);
+    realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
+    const isoDate = realDate.toISOString().split("T")[0];
+    const habitRoutine: Routine = {
+      date: isoDate,
+      day: selectedDay,
+      start: "(습관)",
+      end: "",
+      task: habit,
+      done: false,
+      rating: 0,
+      isHabit: true,
+    };
+    const updated = [
+      ...routines.slice(0, idx + 1),
+      habitRoutine,
+      ...routines.slice(idx + 1),
+    ];
+    await fetch('/api/routines', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ routines: updated }),
+    });
     reloadRoutines();
     setHabitSuggestionIdx(null);
+  };
 
 const handleLogin = async () => {
   setAuthError("");
