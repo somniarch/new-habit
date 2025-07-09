@@ -16,9 +16,19 @@ type Routine = {
   rating: number;
   isHabit?: boolean;
 };
+// 환경변수 (Vercel/로컬 모두 등록!)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "your-admin@email.com";
+const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW || "your-admin-password";
 
 const habitCandidates = ["깊은 숨 2분", "물 한잔", "짧은 산책", "스트레칭"];
 const fullDays = ["월", "화", "수", "목", "금", "토", "일"];
+
+
 
 function getEncouragementAndHabit(task: string) {
   const lower = task.toLowerCase();
