@@ -128,7 +128,14 @@ function formatMonthDay(date: Date, dayIndex: number) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
-
+  const addHabitBetween = async (idx: number, habit: string) => {
+  await fetch('/api/routines', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ routines: updated }),
+  });
+    reloadRoutines();
+    setHabitSuggestionIdx(null);
 
 const handleLogin = async () => {
   setAuthError("");
@@ -239,14 +246,7 @@ return (
     rating: 0,
     isHabit: true,
   };
-const updated = [...routines.slice(0, idx + 1), habitRoutine, ...routines.slice(idx + 1)];
-await fetch('/api/routines', {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ routines: updated }),
-});
-  reloadRoutines();
-  setHabitSuggestionIdx(null);
+
 
 
 
