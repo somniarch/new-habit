@@ -100,13 +100,13 @@ export default function Page() {
       email,
       password,
     });
-    if (res?.error) setAuthError("로그인 실패: " + res.error);
+    if (res?.error) setAuthError(" 실패: " + res.error);
   };
 
   const handleLogout = () => signOut();
 
   const addHabitBetween = async (idx: number, habit: string) => {
-    if (!isLoggedIn) return alert("로그인 후 이용해주세요.");
+    if (!isLoggedIn) return alert(" 후 이용해주세요.");
     const today = new Date(currentDate);
     const dayIdx = fullDays.indexOf(selectedDay);
     const realDate = new Date(today);
@@ -478,6 +478,20 @@ return (
             오늘 일기
           </button>
         </div>
+	<div className="flex justify-center gap-2 mt-4">
+	  {fullDays.map((day) => (
+	    <button
+	      key={day}
+	      onClick={() => setSelectedDay(day)}
+	      className={`rounded-full px-4 py-1 font-semibold ${
+	        selectedDay === day ? "bg-black text-white" : "bg-gray-300 text-black"
+	      }`}
+	      aria-label={day}
+	    >
+	      {day}
+	    </button>
+	  ))}
+	</div>
 
         {/* 루틴 및 습관 탭 */}
         {selectedTab === 'routine-habit' && (
