@@ -4,7 +4,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcrypt";
 
-export default NextAuth({
+export async function GET/POST
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
