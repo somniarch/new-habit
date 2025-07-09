@@ -452,15 +452,16 @@ async function generateImageAI(promptBase: string, _tasks: string[]): Promise<st
   try {
     const activities = _tasks.join(", ");
     const prompt = 
-A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art.
+'A warm, cozy colored pencil illustration with soft textures and subtle shading, resembling hand-drawn diary art.
 Gentle, muted colors like orange, yellow, brown, and green.
 The composition should feel peaceful and heartwarming, like a moment captured in a personal journal.
 No humans should appear in the image.
 The drawing should evoke quiet satisfaction and mindfulness.
 
 🎯 Focus on: ${promptBase}
-📝 Activities today: ${activities}
-;
+📝 Activities today: ${activities}';
+
+
     const res = await fetch("/openai/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
