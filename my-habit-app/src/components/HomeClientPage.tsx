@@ -17,10 +17,6 @@ type Routine = {
   isHabit?: boolean;
 };
 // 환경변수 (Vercel/로컬 모두 등록!)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 
 
