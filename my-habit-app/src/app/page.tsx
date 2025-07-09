@@ -78,7 +78,7 @@ export default function Page() {
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
   const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
   const fetcher = (url: string) => fetch(url).then(r => r.json());
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate] = useState(new Date());
   const { data: routines = [], mutate: reloadRoutines } = useSWR<Routine[]>("/api/routines", fetcher);
   const [diarySummariesAI, setDiarySummariesAI] = useState<Record<string, string>>({});
   const [diaryImagesAI, setDiaryImagesAI] = useState<Record<string, string>>({});
