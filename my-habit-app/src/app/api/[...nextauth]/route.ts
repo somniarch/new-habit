@@ -1,10 +1,10 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "@/lib/prisma"; // 본인 경로에 맞게!
 import bcrypt from "bcrypt";
 
-export async function GET/POST
+const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
@@ -20,10 +20,8 @@ export async function GET/POST
           where: { email: credentials.email },
         });
         if (!user) return null;
-
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
-
         return { id: user.id, email: user.email };
       },
     }),
@@ -34,12 +32,14 @@ export async function GET/POST
       return token;
     },
     async session({ session, token }) {
-      if (token.sub) session.user.id = token.sub;
+      if (token.sub) session.user.id = token.sub as string;
       return session;
     },
   },
   pages: {
-    signIn: "/login", // 선택 사항: 커스텀 로그인 페이지
+    signIn: "/login", // 커스텀 로그인 페이지 (옵션)
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
+
+export { handler as GET, handler as POST };
