@@ -210,13 +210,37 @@ const handleExportCSV = () => {
 
 
   // ✏️ handleAddRoutine 함수 정의 (맨 위쪽 함수 목록 안에 넣어주세요)
-   const handleAddRoutine = async () => {
-   if (!isLoggedIn) {
-     alert("로그인 후 이용해주세요.");
-     return;
-   }
-   if (!newRoutine.task.trim()) return;
-  
+  const handleAddRoutine = async () => {
+  if (!isLoggedIn) {
+    alert("로그인 후 이용해주세요.");
+    return;
+  }
+  if (!newRoutine.task.trim()) return;
+
+  const today = new Date(currentDate);
+  const dayIdx = fullDays.indexOf(selectedDay);
+  const realDate = new Date(today);
+  realDate.setDate(today.getDate() - today.getDay() + (dayIdx + 1));
+  const isoDate = realDate.toISOString().split("T")[0];
+  const newRoutineObj = {
+    date: isoDate,
+    day: selectedDay,
+    start: newRoutine.start,
+    end: newRoutine.end,
+    task: newRoutine.task,
+    done: false,
+    rating: 0,
+    isHabit: false,
+  };
+  await fetch('/api/routines', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newRoutineObj),
+  });
+  reloadRoutines();
+  setNewRoutine({ start: "08:00", end: "09:00", task: "" });
+};
+
 
     
 
@@ -230,22 +254,20 @@ const handleExportCSV = () => {
      body: JSON.stringify({ routines: updated }),
    });
    reloadRoutines();
-    if (!copy[idx].done) return;
-
-    const { emoji, msg } = getEncouragementAndHabit(copy[idx].task);
-    setToast({ emoji, message: `${msg} "${copy[idx].task}"!` });
-    setHabitSuggestionIdx(idx);
-
-    setTodayDiaryLogs((prev) => {
-      const dayLogs = prev[copy[idx].day] || [];
-      if (!dayLogs.includes(copy[idx].task)) {
-        return {
-          ...prev,
-          [copy[idx].day]: [...dayLogs, copy[idx].task],
-        };
-      }
-      return prev;
-    });
+ if (!updated[idx].done) return;
+ const { emoji, msg } = getEncouragementAndHabit(updated[idx].task);
+ setToast({ emoji, message: `${msg} "${updated[idx].task}"!` });
+ setHabitSuggestionIdx(idx);
+ setTodayDiaryLogs((prev) => {
+   const dayLogs = prev[updated[idx].day] || [];
+   if (!dayLogs.includes(updated[idx].task)) {
+     return {
+       ...prev,
+       [updated[idx].day]: [...dayLogs, updated[idx].task],
+     };
+   }
+   return prev;
+ });
   };
 
    const setRating = async (idx: number, rating: number) => {
@@ -694,6 +716,9 @@ return (
                 currentDate,
                 dayIdx
               );
+//추가 함수
+              const [todayDiaryLogs, setTodayDiaryLogs] = useState<Record<string, string[]>>({});
+
               const summary =
                 diarySummariesAI[iso] ||
                 warmSummary(completedTasks);
