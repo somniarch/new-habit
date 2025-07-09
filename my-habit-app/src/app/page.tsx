@@ -1,4 +1,5 @@
 'use client';
+import React from "react";
 import Image from "next/image"; 
 import WeeklySummary from "@/components/ui/WeeklySummary";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -48,19 +49,6 @@ function getEncouragementAndHabit(task: string) {
   };
 }
 
-function Toast({ message, emoji, onClose }: { message: string; emoji: string; onClose: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(() => onClose(), 2500);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className="fixed bottom-8 right-8 bg-black text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 z-50">
-      <span>{emoji}</span>
-      <span>{message}</span>
-    </div>
-  );
-}
 
 
 function formatDiaryDate(day: string, baseDate: Date, dayIndex: number) {
@@ -85,7 +73,6 @@ export default function Page() {
   const { data: session, status } = useSession();
   const isAdmin = session?.user?.role === "admin";
   const isLoggedIn = status === "authenticated";
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTab, setSelectedTab] = useState<"routine-habit" | "tracker" | "today-diary">("routine-habit");
   const [newRoutine, setNewRoutine] = useState({ start: "08:00", end: "09:00", task: "" });
   const [habitSuggestionIdx, setHabitSuggestionIdx] = useState<number | null>(null);
@@ -414,7 +401,7 @@ useEffect(() => {
       }
     }
   })();
- }, [routines, todayDiaryLogs, generated5, generated10]);
+ }, [routines, todayDiaryLogs, generated5, generated10, currentDate]);
 
   // ──────────────────────────────────────────────────────────────
   // JSX 리턴 시작 (로그인 분기)
