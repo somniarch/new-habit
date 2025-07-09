@@ -96,8 +96,8 @@ function formatMonthDay(date: Date, dayIndex: number) {
 
 export default function Page() {
   // 1. 상태 선언 (useState 등)
-  const isAdmin = session?.user?.role === "admin";
   const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === "admin";
   const isLoggedIn = status === "authenticated";
   const [toast, setToast] = useState<{ message: string; emoji: string } | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -164,15 +164,6 @@ export default function Page() {
     setHabitSuggestionIdx(null);
   };
 
-const handleLogin = async () => {
-  setAuthError("");
-  const res = await signIn("credentials", {
-    redirect: false,
-    email,
-    password,
-  });
-  if (res?.error) setAuthError("로그인 실패: " + res.error);
-};
 
 const handleLogout = () => signOut();
 
